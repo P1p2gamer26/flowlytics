@@ -1,0 +1,15 @@
+Django==5.1.5
+djangorestframework==3.15.2
+psycopg[binary]==3.2.3
+python-dotenv==1.0.1
+ultralytics==8.3.55
+supervision==0.25.1
+opencv-python-headless==4.10.0.84
+anthropic==0.42.0
+cryptography==44.0.0
+pytest==8.3.4
+pytest-django==4.9.0
+yt-dlp>=2026.8.19          # anclado a una version vieja YouTube deja de servir formatos
+gunicorn==23.0.0        # servidor de produccion (Linux)
+matplotlib==3.10.9      # analytics/reportes_views.py lo importa al cargar las URLs
+numpy==2.2.6            # vision/core/*.py lo usa directo, no solo por opencv/ultralytics

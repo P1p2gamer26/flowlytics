@@ -1,0 +1,33 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.sqlite3
+.env
+media/
+supervision/
+*.pt
+*.onnx
+_openvino_model/
+.pytest_cache/
+staticfiles/
+demo/informe_humo.md
+frontend/node_modules/
+
+
+# respaldos generados por exportar_respaldo
+backups/
+
+# extraccion de respaldos en tests: va a tmp_path, nunca al repo
+tests/temp_backups/
+
+# logs de los workers (correr_camaras)
+logs/
+db.sqlite3-wal
+db.sqlite3-shm
+media/en_vivo/
+
+# lo que generan los tests y los reportes
+piloto/
+reporte-primer-dia.md
+automation/

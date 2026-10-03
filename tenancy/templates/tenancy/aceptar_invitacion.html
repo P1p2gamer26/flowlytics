@@ -1,0 +1,8 @@
+{% extends "dashboard/base.html" %}
+{% block title %}Unirte{% endblock %}
+{% block content %}
+<h1>Únete a {{ inv.business.name }}</h1>
+<form method="post">{% csrf_token %}{{ form.as_p }}
+  <button type="submit">Crear cuenta y entrar</button>
+</form>
+{% endblock %}

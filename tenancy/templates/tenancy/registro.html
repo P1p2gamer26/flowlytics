@@ -1,0 +1,11 @@
+{% extends "dashboard/base.html" %}
+{% block title %}Crear tu negocio{% endblock %}
+{% block content %}
+<h1>Crea tu negocio</h1>
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit">Crear y empezar</button>
+</form>
+<p>¿Ya tienes cuenta? <a href="{% url 'login' %}">Inicia sesión</a>.</p>
+{% endblock %}

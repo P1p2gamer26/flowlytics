@@ -1,0 +1,16 @@
+{% extends "dashboard/base.html" %}
+{% block title %}Plataforma{% endblock %}
+{% block content %}
+<h1>Negocios en la plataforma</h1>
+<table>
+  <tr><th>Negocio</th><th>Plan</th><th>Cámaras</th><th>Miembros</th></tr>
+  {% for fila in filas %}
+  <tr>
+    <td>{{ fila.business.name }}</td>
+    <td>{{ fila.plan }}</td>
+    <td>{{ fila.num_camaras }} / {{ fila.max_camaras }}</td>
+    <td>{{ fila.num_miembros }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}

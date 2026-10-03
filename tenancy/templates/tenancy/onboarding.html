@@ -1,0 +1,21 @@
+{% extends "dashboard/base.html" %}
+{% block title %}Primeros pasos{% endblock %}
+{% block content %}
+<h1>Configura tu negocio</h1>
+<ol>
+  <li>✅ Negocio creado: <strong>{{ business.name }}</strong></li>
+  <li>{% if tiene_camara %}✅{% else %}⬜{% endif %}
+      Agrega tu primera cámara — <a href="/camaras/">ir a cámaras</a></li>
+  <li>{% if tiene_zona %}✅{% else %}⬜{% endif %}
+      Dibuja las zonas de tu negocio
+      {% if rubro %}
+      <ul>
+        {% for z in rubro.zonas %}<li>{{ z.name }}</li>{% endfor %}
+      </ul>
+      <p>{{ rubro.foco }}</p>
+      {% else %}
+      sobre la cámara para medir aforo
+      {% endif %}</li>
+</ol>
+{% if completo %}<p>¡Listo! <a href="{% url 'home' %}">Ver tu panel</a>.</p>{% endif %}
+{% endblock %}
