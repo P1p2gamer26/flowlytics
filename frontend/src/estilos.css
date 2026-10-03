@@ -1,0 +1,78 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   Sistema visual: la tienda, no el dashboard.
+
+   Quien abre esto es el dueño de un supermercado de barrio, un café o una
+   droguería, al cerrar el día. No es técnico. El color aquí ES informacion:
+   dice si la tienda estuvo tranquila, llena, o con cola — no adorna.
+   --------------------------------------------------------------------------- */
+@theme {
+  /* Superficies */
+  --color-papel: #f2f3ee;      /* blanco con matiz verde: papel de tienda, no crema */
+  --color-panel: #ffffff;
+  --color-noche: #10201c;      /* verde muy oscuro: la cinta del dia */
+  --color-noche-2: #1b332c;
+
+  /* Tinta */
+  --color-tinta: #18231f;
+  --color-tinta-2: #5a6b64;
+  --color-tinta-clara: #a9b5af;
+
+  /* Estados del local. Este es el corazon del sistema: tres colores que
+     significan algo concreto y se usan SIEMPRE con el mismo significado. */
+  --color-calma: #0f7a57;      /* verde toldo: hora tranquila */
+  --color-lleno: #e9a13b;      /* ambar de luz interior: hora de movimiento */
+  --color-fila: #d6432c;       /* rojo de rotulo: cola, pide actuar */
+  /* Azul solo para el personal marcado a mano: no compite con los tres de
+     arriba porque no dice como esta la tienda, dice quien es quien. */
+  --color-personal: #2563c9;
+
+  --font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --font-sans: "Instrument Sans", system-ui, sans-serif;
+
+  --text-cifra: 3.25rem;
+  --text-titular: 1.6rem;
+}
+
+body {
+  background: var(--color-papel);
+  color: var(--color-tinta);
+  font-family: var(--font-sans);
+  font-feature-settings: "ss01";
+}
+
+:root {
+  color-scheme: light;
+}
+
+/* Se navega con teclado sobre fondo claro: el foco tiene que verse. */
+:focus-visible {
+  outline: 2px solid var(--color-calma);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* ---------------------------------------------------------------------------
+   La cinta del dia: 24 columnas que se levantan una tras otra al cargar.
+   Es el UNICO movimiento no pedido por el usuario de toda la pantalla, y va
+   una sola vez. El retraso por columna lo pone el componente con --i.
+   --------------------------------------------------------------------------- */
+@keyframes sube-hora {
+  from { transform: scaleY(0.06); opacity: .35; }
+  to   { transform: scaleY(1);    opacity: 1; }
+}
+
+.hora {
+  transform-origin: bottom;
+  animation: sube-hora .5s cubic-bezier(.2, .8, .3, 1) backwards;
+  animation-delay: calc(var(--i) * 22ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: .01ms !important;
+  }
+}

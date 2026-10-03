@@ -1,0 +1,43 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Panel{% endblock %} · Flowlytics</title>
+  <link rel="icon" type="image/svg+xml" href="{% static 'dashboard/app/favicon.svg' %}">
+  <style>
+    :root { color-scheme: light dark; --acento: #2563eb; }
+    body { font-family: system-ui, sans-serif; margin: 0; padding: 1.5rem;
+           max-width: 1100px; margin-inline: auto; line-height: 1.5; }
+    header { display: flex; justify-content: space-between; align-items: center;
+             border-bottom: 2px solid var(--acento); padding-bottom: .75rem; }
+    header strong { font-size: 1.15rem; }
+    nav a { text-decoration: none; color: var(--acento); }
+    nav a:hover { text-decoration: underline; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+             gap: 1rem; margin: 1.5rem 0; }
+    .card { border: 1px solid #8884; border-radius: 12px; padding: 1rem;
+            box-shadow: 0 1px 3px #0001; }
+    .card .value { font-size: 2rem; font-weight: 700; color: var(--acento); }
+    .card .label { font-size: .85rem; opacity: .7; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: .5rem .6rem; border-bottom: 1px solid #8883; }
+    tbody tr:hover { background: #8881; }
+    .descargas { margin: 1rem 0; opacity: .85; }
+    pre { white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <header>
+    <strong>Panel de Analítica</strong>
+    <nav><a href="{% url 'home' %}">Panel</a> · <a href="/camaras/">Cámaras</a>{% if request.user.profile.is_admin %} · <a href="{% url 'sistema' %}">Sistema</a> · <a href="{% url 'plataforma' %}">Plataforma</a>{% endif %}</nav>
+    <span>{{ request.user.username }} —
+      <form method="post" action="{% url 'logout' %}" style="display:inline">
+        {% csrf_token %}<button type="submit">Salir</button>
+      </form>
+    </span>
+  </header>
+  {% block content %}{% endblock %}
+</body>
+</html>

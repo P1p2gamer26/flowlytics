@@ -1,0 +1,33 @@
+{% extends "dashboard/base.html" %}
+{% block content %}
+<h1>Panel de sistema</h1>
+
+<h2>Workers</h2>
+<table>
+  <tr><th>Cámara</th><th>FPS medido / objetivo</th><th>Frames descartados</th>
+      <th>Reconexiones</th><th>Último latido</th><th>Estado</th></tr>
+  {% for s in workers %}
+    <tr>
+      <td>{{ s.camera.name }}</td>
+      <td>{{ s.fps_medido|floatformat:2 }} / {{ fps_objetivo }}</td>
+      <td>{{ s.frames_descartados }}</td>
+      <td>{{ s.reconexiones }}</td>
+      <td>{{ s.ultimo_latido|timesince }} atrás</td>
+      <td>{% if s.esta_viva %}viva{% else %}caída{% endif %}</td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="6">Sin datos de workers todavía.</td></tr>
+  {% endfor %}
+</table>
+
+<h2>Jobs</h2>
+<table>
+  <tr><th>Job</th><th>Última corrida</th><th>Resultado</th></tr>
+  {% for j in jobs %}
+    <tr><td>{{ j.nombre }}</td><td>{{ j.terminado_en }}</td>
+        <td>{% if j.ok %}ok{% else %}fallo{% endif %}</td></tr>
+  {% endfor %}
+</table>
+
+<p>Ventanas marcadas como degradadas: <strong>{{ ventanas_degradadas }}</strong></p>
+{% endblock %}
