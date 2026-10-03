@@ -1,0 +1,498 @@
+[
+ {
+  "model": "tenancy.business",
+  "pk": 5,
+  "fields": {
+   "name": "Tiendas grabadas (demo)",
+   "kind": "cafe",
+   "timezone": "America/Bogota",
+   "abre": "00:00:00",
+   "cierra": "00:00:00",
+   "comparte_corpus": true,
+   "plan": null,
+   "created_at": "2026-10-03T12:00:00Z"
+  }
+ },
+ {
+  "model": "tenancy.business",
+  "pk": 6,
+  "fields": {
+   "name": "Umineko Shouten (YouTube en vivo)",
+   "kind": "retail",
+   "timezone": "America/Bogota",
+   "abre": "00:00:00",
+   "cierra": "00:00:00",
+   "comparte_corpus": true,
+   "plan": null,
+   "created_at": "2026-10-03T12:00:00Z"
+  }
+ },
+ {
+  "model": "tenancy.business",
+  "pk": 7,
+  "fields": {
+   "name": "Maria Deseo (YouTube en vivo)",
+   "kind": "retail",
+   "timezone": "America/Bogota",
+   "abre": "00:00:00",
+   "cierra": "00:00:00",
+   "comparte_corpus": true,
+   "plan": null,
+   "created_at": "2026-10-03T12:00:00Z"
+  }
+ },
+ {
+  "model": "cameras.camera",
+  "pk": 4,
+  "fields": {
+   "business": 5,
+   "name": "Caja de supermercado",
+   "source": "demo/videos/cctv/super_caja.mp4",
+   "enabled": true,
+   "credencial_usuario": "",
+   "credencial_cifrada": "",
+   "frame_w": 1920,
+   "frame_h": 1080,
+   "altura_camara_m": 0.0,
+   "angulo_grados": 0.0,
+   "zona_muerta": [],
+   "lost_track_buffer": 30,
+   "contexto": "general",
+   "descripcion": "",
+   "created_at": "2026-10-03T12:00:00Z"
+  }
+ },
+ {
+  "model": "cameras.camera",
+  "pk": 5,
+  "fields": {
+   "business": 5,
+   "name": "Tienda pequeña (caja y pasillos)",
+   "source": "demo/videos/cctv/tienda_iprox.mp4",
+   "enabled": true,
+   "credencial_usuario": "",
+   "credencial_cifrada": "",
+   "frame_w": 1270,
+   "frame_h": 720,
+   "altura_camara_m": 0.0,
+   "angulo_grados": 0.0,
+   "zona_muerta": [],
+   "lost_track_buffer": 30,
+   "contexto": "general",
+   "descripcion": "",
+   "created_at": "2026-10-03T12:00:00Z"
+  }
+ },
+ {
+  "model": "cameras.camera",
+  "pk": 6,
+  "fields": {
+   "business": 5,
+   "name": "Tienda en EE. UU.",
+   "source": "demo/videos/cctv/tienda_usa.mp4",
+   "enabled": true,
+   "credencial_usuario": "",
+   "credencial_cifrada": "",
+   "frame_w": 1920,
+   "frame_h": 1080,
+   "altura_camara_m": 0.0,
+   "angulo_grados": 0.0,
+   "zona_muerta": [],
+   "lost_track_buffer": 30,
+   "contexto": "general",
+   "descripcion": "",
+   "created_at": "2026-10-03T12:00:00Z"
+  }
+ },
+ {
+  "model": "cameras.camera",
+  "pk": 8,
+  "fields": {
+   "business": 6,
+   "name": "Caja y tienda",
+   "source": "https://www.youtube.com/watch?v=3o9aoRyrvAk",
+   "enabled": true,
+   "credencial_usuario": "",
+   "credencial_cifrada": "",
+   "frame_w": 854,
+   "frame_h": 480,
+   "altura_camara_m": 0.0,
+   "angulo_grados": 0.0,
+   "zona_muerta": [],
+   "lost_track_buffer": 30,
+   "contexto": "counter",
+   "descripcion": "Panaderia/tienda en Fukushima, vista cenital: mostrador-caja a la izquierda, clientes en el piso.",
+   "created_at": "2026-10-03T12:00:00Z"
+  }
+ },
+ {
+  "model": "cameras.camera",
+  "pk": 9,
+  "fields": {
+   "business": 7,
+   "name": "Cam 4a Rachel Store (mostrador)",
+   "source": "https://www.youtube.com/watch?v=7p3ZFFr3ksE",
+   "enabled": true,
+   "credencial_usuario": "",
+   "credencial_cifrada": "",
+   "frame_w": 854,
+   "frame_h": 480,
+   "altura_camara_m": 0.0,
+   "angulo_grados": 0.0,
+   "zona_muerta": [],
+   "lost_track_buffer": 30,
+   "contexto": "counter",
+   "descripcion": "",
+   "created_at": "2026-10-03T12:00:00Z"
+  }
+ },
+ {
+  "model": "cameras.camera",
+  "pk": 10,
+  "fields": {
+   "business": 7,
+   "name": "Cam 3 Boy Sayong (mercado)",
+   "source": "https://www.youtube.com/watch?v=sShWJMKFV-k",
+   "enabled": true,
+   "credencial_usuario": "",
+   "credencial_cifrada": "",
+   "frame_w": 854,
+   "frame_h": 480,
+   "altura_camara_m": 0.0,
+   "angulo_grados": 0.0,
+   "zona_muerta": [],
+   "lost_track_buffer": 30,
+   "contexto": "pasillo",
+   "descripcion": "",
+   "created_at": "2026-10-03T12:00:00Z"
+  }
+ },
+ {
+  "model": "cameras.zone",
+  "pk": 6,
+  "fields": {
+   "camera": 4,
+   "name": "Sala",
+   "kind": "general",
+   "polygon": [
+    [
+     0,
+     0
+    ],
+    [
+     1,
+     0
+    ],
+    [
+     1,
+     1
+    ]
+   ]
+  }
+ },
+ {
+  "model": "cameras.zone",
+  "pk": 7,
+  "fields": {
+   "camera": 5,
+   "name": "Sala",
+   "kind": "general",
+   "polygon": [
+    [
+     0,
+     0
+    ],
+    [
+     1,
+     0
+    ],
+    [
+     1,
+     1
+    ]
+   ]
+  }
+ },
+ {
+  "model": "cameras.zone",
+  "pk": 8,
+  "fields": {
+   "camera": 6,
+   "name": "Sala",
+   "kind": "general",
+   "polygon": [
+    [
+     0,
+     0
+    ],
+    [
+     1,
+     0
+    ],
+    [
+     1,
+     1
+    ]
+   ]
+  }
+ },
+ {
+  "model": "cameras.zone",
+  "pk": 10,
+  "fields": {
+   "camera": 8,
+   "name": "Personal",
+   "kind": "staff",
+   "polygon": [
+    [
+     110,
+     240
+    ],
+    [
+     480,
+     190
+    ],
+    [
+     520,
+     290
+    ],
+    [
+     140,
+     330
+    ]
+   ]
+  }
+ },
+ {
+  "model": "cameras.zone",
+  "pk": 11,
+  "fields": {
+   "camera": 8,
+   "name": "Fila caja",
+   "kind": "queue",
+   "polygon": [
+    [
+     200,
+     480
+    ],
+    [
+     440,
+     420
+    ],
+    [
+     540,
+     520
+    ],
+    [
+     540,
+     720
+    ],
+    [
+     260,
+     720
+    ]
+   ]
+  }
+ },
+ {
+  "model": "cameras.zone",
+  "pk": 12,
+  "fields": {
+   "camera": 8,
+   "name": "Tienda",
+   "kind": "general",
+   "polygon": [
+    [
+     150,
+     330
+    ],
+    [
+     760,
+     300
+    ],
+    [
+     1010,
+     420
+    ],
+    [
+     1000,
+     720
+    ],
+    [
+     180,
+     720
+    ]
+   ]
+  }
+ },
+ {
+  "model": "cameras.zone",
+  "pk": 13,
+  "fields": {
+   "camera": 9,
+   "name": "Cola",
+   "kind": "queue",
+   "polygon": [
+    [
+     230,
+     190
+    ],
+    [
+     780,
+     190
+    ],
+    [
+     780,
+     290
+    ],
+    [
+     230,
+     290
+    ]
+   ]
+  }
+ },
+ {
+  "model": "cameras.zone",
+  "pk": 14,
+  "fields": {
+   "camera": 9,
+   "name": "Mostrador",
+   "kind": "counter",
+   "polygon": [
+    [
+     280,
+     290
+    ],
+    [
+     800,
+     290
+    ],
+    [
+     840,
+     420
+    ],
+    [
+     300,
+     400
+    ]
+   ]
+  }
+ },
+ {
+  "model": "cameras.zone",
+  "pk": 15,
+  "fields": {
+   "camera": 9,
+   "name": "Personal",
+   "kind": "staff",
+   "polygon": [
+    [
+     0,
+     180
+    ],
+    [
+     300,
+     180
+    ],
+    [
+     340,
+     480
+    ],
+    [
+     0,
+     480
+    ]
+   ]
+  }
+ },
+ {
+  "model": "cameras.zone",
+  "pk": 16,
+  "fields": {
+   "camera": 10,
+   "name": "Pasillo",
+   "kind": "pasillo",
+   "polygon": [
+    [
+     0,
+     150
+    ],
+    [
+     240,
+     150
+    ],
+    [
+     270,
+     330
+    ],
+    [
+     330,
+     480
+    ],
+    [
+     0,
+     480
+    ]
+   ]
+  }
+ },
+ {
+  "model": "cameras.zone",
+  "pk": 17,
+  "fields": {
+   "camera": 10,
+   "name": "Entrada",
+   "kind": "entrada",
+   "polygon": [
+    [
+     240,
+     170
+    ],
+    [
+     340,
+     170
+    ],
+    [
+     360,
+     300
+    ],
+    [
+     270,
+     340
+    ],
+    [
+     230,
+     250
+    ]
+   ]
+  }
+ },
+ {
+  "model": "cameras.zone",
+  "pk": 18,
+  "fields": {
+   "camera": 10,
+   "name": "Personal",
+   "kind": "staff",
+   "polygon": [
+    [
+     480,
+     150
+    ],
+    [
+     660,
+     150
+    ],
+    [
+     660,
+     260
+    ],
+    [
+     480,
+     260
+    ]
+   ]
+  }
+ }
+]

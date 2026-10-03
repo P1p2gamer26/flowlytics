@@ -1,0 +1,60 @@
+{
+  "videos": [
+    {
+      "ruta": "cctv/tienda_usa.mp4",
+      "contexto": "tienda",
+      "fps": 30.0,
+      "ancho": 1920,
+      "alto": 1080,
+      "duracion_s": 60.3,
+      "origen": "YouTube -1bRhYjw1qE, E43A inside the Retail store in USA #2",
+      "aforo_max": null,
+      "entradas": null,
+      "salidas": null,
+      "notas": "Camara de esquina alta en tienda. Buena luz. Conteo manual pendiente.",
+      "lineas": []
+    },
+    {
+      "ruta": "cctv/tienda_iprox.mp4",
+      "contexto": "tienda",
+      "fps": 13.09,
+      "ancho": 1270,
+      "alto": 720,
+      "duracion_s": 110.9,
+      "origen": "YouTube KMJS66jBtVQ, HD CCTV iProx retail store",
+      "aforo_max": null,
+      "entradas": null,
+      "salidas": null,
+      "notas": "La mas parecida al cliente objetivo: caja, pasillos y cola. Conteo manual pendiente.",
+      "lineas": []
+    },
+    {
+      "ruta": "cctv/super_caja.mp4",
+      "contexto": "tienda",
+      "fps": 15.0,
+      "ancho": 1920,
+      "alto": 1080,
+      "duracion_s": 299.0,
+      "origen": "YouTube -8zyEwAa50Q, HD-SDI supermarket checkout",
+      "aforo_max": null,
+      "entradas": null,
+      "salidas": null,
+      "notas": "Caja de supermercado en vista alta: fila y tiempo de espera. Conteo manual pendiente.",
+      "lineas": []
+    },
+    {
+      "ruta": "local_real/camara_27.mp4",
+      "contexto": "supermercado",
+      "fps": 30.0,
+      "ancho": 1920,
+      "alto": 1080,
+      "duracion_s": 240.0,
+      "origen": "Cámara instalada en Fase 27 — local real",
+      "aforo_max": 8,
+      "entradas": 23,
+      "salidas": 21,
+      "notas": "Conteo manual breve (10 min) para el contrato de precisión. Comparación honesta con datos sintéticos pendiente.",
+      "lineas": [{"nombre": "entrada", "punto_inicio": [100, 500], "punto_fin": [180, 500]}]
+    }
+  ]
+}
