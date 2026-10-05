@@ -130,16 +130,43 @@ analiza). `correr_camaras` la detecta sola en menos de un minuto.
 
 ## Para desarrollar
 
-```bash
-# Tests del backend
-.venv/bin/python -m pytest -q          # Windows: .venv\Scripts\python.exe -m pytest -q
+Para **usar** la demo no necesitas Node: el panel ya viene compilado en
+`dashboard/static/dashboard/app/`. Node (20+) solo hace falta si editas `frontend/src`.
 
-# Panel (React): editar en frontend/src y recompilar al build que sirve Django
+Primero ejecuta `iniciar.bat` / `./iniciar.sh` una vez para que cree el entorno `.venv`.
+
+**Tests del backend**
+
+| Windows (cmd o PowerShell) | Mac / Linux |
+|---|---|
+| `.venv\Scripts\python.exe -m pytest -q` | `.venv/bin/python -m pytest -q` |
+
+**Panel (React)**: se edita en `frontend/src` y se recompila al build que sirve Django.
+Los comandos son iguales en todos los sistemas:
+
+```
 cd frontend
 npm install
-npm run build        # escribe en dashboard/static/dashboard/app/
-npx vitest run       # tests del frontend
+npm run build
+npx vitest run
 ```
+
+`npm run build` escribe en `dashboard/static/dashboard/app/` (recarga el navegador para
+verlo); `npx vitest run` corre los tests del frontend.
+
+**Problemas comunes en Windows**
+
+- Copia los comandos sin los comentarios `# ...`: cmd no los entiende y responde
+  `"#" no se reconoce como un comando interno o externo`.
+- `".venv" no se reconoce...`: estás usando la ruta de Mac/Linux (`.venv/bin/python`).
+  En Windows es `.venv\Scripts\python.exe`, y el `.venv` solo existe después de correr
+  `iniciar.bat` la primera vez.
+- `"tsc" no se reconoce...` al hacer `npm run build`: falta `npm install` (o falló).
+  Ejecútalo dentro de `frontend/` antes de compilar.
+- `npm error EBADPLATFORM ... @rolldown/binding-linux-x64-gnu`: tienes una versión vieja
+  del repo que forzaba un paquete solo de Linux. Haz `git pull` y vuelve a correr
+  `npm install`. No agregues a `package.json` paquetes `@*/binding-<sistema>-*`: npm
+  instala solo el que corresponde a cada máquina.
 
 Variables útiles (en `.env` o en el entorno; ver `.env.example`):
 
