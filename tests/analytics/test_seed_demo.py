@@ -28,3 +28,16 @@ def test_seed_demo_es_idempotente():
     call_command("seed_demo", "--dias", "3")
     assert MetricWindow.objects.count() == n1          # no duplicó métricas
     assert Business.objects.filter(name="Demo").count() == negocios1 == 1
+
+
+@pytest.mark.django_db
+def test_seed_demo_no_usa_la_webcam():
+    from cameras.models import Camera
+    call_command("seed_demo", "--dias", "1")
+    cam = Camera.objects.get(name="Cámara demo")
+    assert cam.source != "0"
+    cam.source = "0"
+    cam.save()
+    call_command("seed_demo", "--dias", "1")
+    cam.refresh_from_db()
+    assert cam.source != "0"

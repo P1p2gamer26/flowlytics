@@ -23,6 +23,8 @@ PERSONAS_POR_HORA = [0, 0, 0, 0, 0, 0, 1, 2, 4, 6, 8, 9,
                      10, 9, 11, 12, 10, 8, 6, 4, 3, 2, 1, 0]
 
 
+VIDEO_DEMO = "demo/videos/cctv/super_caja.mp4"
+
 class Command(BaseCommand):
     help = "Siembra un negocio de demostración con métricas sintéticas."
 
@@ -39,8 +41,13 @@ class Command(BaseCommand):
             user.set_password("demo12345")
             user.save()
         Profile.objects.get_or_create(user=user, defaults={"role": "owner", "business": biz})
+        # Un video de tienda y no la webcam ("0"): sembrar la demo no debe encender
+        # la cámara del portátil. Las bases viejas que quedaron con "0" se corrigen.
         cam, _ = Camera.objects.get_or_create(
-            business=biz, name="Cámara demo", defaults={"source": "0"})
+            business=biz, name="Cámara demo", defaults={"source": VIDEO_DEMO})
+        if cam.source == "0":
+            cam.source = VIDEO_DEMO
+            cam.save(update_fields=["source"])
         for nombre, kind in ZONAS:
             Zone.objects.get_or_create(
                 camera=cam, name=nombre,

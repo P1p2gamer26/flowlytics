@@ -113,9 +113,9 @@ export default function Panel({ negocio, negocios, onCambiarNegocio }: {
   const rubro = resumen.rubro ?? RUBRO_POR_DEFECTO;
   const visitasPorHora = Array.from({ length: 24 }, (_, h) =>
     resumen.hourly.find((x) => x.hour === h)?.visitors ?? 0);
-  const promedioHoras = generarHorasPromedioDemo(visitasPorHora); // demo:
-  const semana = generarSemanaDemo(resumen.total_visitors, new Date()); // demo:
-  const kpis = kpisDelDia(resumen, semana[5].total, semana[0].total); // demo: ayer y semana pasada
+  const promedioHoras = generarHorasPromedioDemo(visitasPorHora);
+  const semana = generarSemanaDemo(resumen.total_visitors, new Date());
+  const kpis = kpisDelDia(resumen, semana[5].total, semana[0].total);
 
   const acciones = (
     <div className="flex items-center gap-2 text-sm">
@@ -168,38 +168,70 @@ export default function Panel({ negocio, negocios, onCambiarNegocio }: {
         </div>
       ) : null}
 
-      {/* Lo primero que se lee: cómo fue el día, en una frase. */}
+      {/* Tarjetas KPI a todo ancho */}
+      <div className="col-span-12">
+        <TarjetasKpi kpis={kpis} />
+      </div>
+
+      {/* Fila: Mapa de calor + Recomendaciones IA */}
+      <section className="col-span-12 lg:col-span-8 rounded-3xl bg-panel p-6">
+        <div className="flex flex-wrap items-baseline justify-between gap-2 mb-4">
+          <h2 className="font-display text-xl font-bold text-tinta">Mapa de calor de la tienda</h2>
+          {camaras.length > 1 && (
+            <select value={camara?.id ?? ""}
+                    onChange={(e) => cambiarCamara(Number(e.target.value))}
+                    className="rounded-full ring-1 ring-tinta-2/20 bg-panel px-4 py-2 text-sm">
+              {camaras.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}{c.es_video ? " (video)" : ""}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+        <div className="mt-3">
+          {vista && camara ? (
+            <Plano imagen={vista.image} video={vista.video} ancho={vista.width}
+                   alto={vista.height} zonas={camara.zones} camaraId={camara.id} />
+          ) : (
+            <p className="rounded-3xl bg-panel p-10 text-center text-tinta-2">
+              Todavía no hay ninguna cámara con video. Carga uno para empezar.
+            </p>
+          )}
+        </div>
+        {camara?.descripcion && (
+          <p className="mt-2 text-tinta-2">{camara.descripcion}</p>
+        )}
+      </section>
+
+      <div className="col-span-12 lg:col-span-4 h-full">
+        <RecomendacionesIA recomendaciones={recomendacionesParaMostrar(extra?.recomendacion)} />
+      </div>
+
+      {/* Fila: Visitantes por hora + Últimos 7 días */}
+      <section className="col-span-12 lg:col-span-8 rounded-3xl bg-panel p-6">
+        <h2 className="font-display text-xl font-bold text-tinta">Visitantes por hora</h2>
+        <p className="mb-2 text-sm text-tinta-2">Hoy frente al promedio de la semana</p>
+        <GraficaHoras hoy={visitasPorHora} promedio={promedioHoras} />
+      </section>
+      <section className="col-span-12 lg:col-span-4 rounded-3xl bg-panel p-6">
+        <h2 className="font-display text-xl font-bold text-tinta">Últimos 7 días</h2>
+        <p className="mb-2 text-sm text-tinta-2">Visitantes por día</p>
+        <BarrasSemana semana={semana} />
+      </section>
+
+      {/* Resumen en palabras y Cinta del día */}
       <div className="col-span-12">
         <ResumenEnPalabras visitantes={resumen.total_visitors}
                            horaPico={resumen.peak_hour}
                            esperaSegundos={resumen.avg_queue_seconds} />
       </div>
 
-      {/* Y la forma del día. Es la pieza que manda en la pantalla. */}
       <div className="col-span-12">
         <CintaDelDia horas={resumen.hourly}
                      horasConAviso={eventos.map((e) => new Date(e.occurred_at).getHours())}
                      ahora={esHoy ? new Date().getHours() : undefined} />
       </div>
-
-      <div className="col-span-12">
-        <TarjetasKpi kpis={kpis} />
-      </div>
-
-      <div className="col-span-12">
-        <RecomendacionesIA recomendaciones={recomendacionesParaMostrar(extra?.recomendacion)} />
-      </div>
-
-      <section className="col-span-12 md:col-span-7 rounded-3xl bg-panel p-6">
-        <h2 className="font-display text-xl font-bold text-tinta">Visitantes por hora</h2>
-        <p className="mb-2 text-sm text-tinta-2">Hoy frente al promedio de la semana</p>
-        <GraficaHoras hoy={visitasPorHora} promedio={promedioHoras} />
-      </section>
-      <section className="col-span-12 md:col-span-5 rounded-3xl bg-panel p-6">
-        <h2 className="font-display text-xl font-bold text-tinta">Últimos 7 días</h2>
-        <p className="mb-2 text-sm text-tinta-2">Visitantes por día</p>
-        <BarrasSemana semana={semana} />
-      </section>
 
       {/* Zonas: comparar es el trabajo, así que barras y no una tabla de cifras. */}
       <section className="col-span-12 md:col-span-7">
@@ -220,7 +252,7 @@ export default function Panel({ negocio, negocios, onCambiarNegocio }: {
                     z.zone_kind === "queue" ? "bg-fila"
                     : z.zone_kind === "counter" || z.zone_kind === "staff" ? "bg-personal"
                     : "bg-calma"}`}
-                        style={{ width: `${Math.max((z.visitors / topeZona) * 100, 2)}%` }} />
+                      style={{ width: `${Math.max((z.visitors / topeZona) * 100, 2)}%` }} />
                 </span>
                 <span className="tabular-nums text-sm">
                   {z.visitors} {z.visitors === 1 ? "persona" : "personas"}
@@ -304,37 +336,6 @@ export default function Panel({ negocio, negocios, onCambiarNegocio }: {
             Faltan negocios de tu tipo para poder comparar sin que nadie sea
             identificable. Hacen falta al menos cinco.
           </p>
-        )}
-      </section>
-
-      {/* La cámara va abajo: es el detalle, no la respuesta. */}
-      <section className="col-span-12">
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="font-display text-xl font-bold text-tinta">La cámara</h2>
-          {camaras.length > 1 && (
-            <select value={camara?.id ?? ""}
-                    onChange={(e) => cambiarCamara(Number(e.target.value))}
-                    className="rounded-full ring-1 ring-tinta-2/20 bg-panel px-4 py-2 text-sm">
-              {camaras.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}{c.es_video ? " (video)" : ""}
-                </option>
-              ))}
-            </select>
-          )}
-        </div>
-        <div className="mt-3">
-          {vista && camara ? (
-            <Plano imagen={vista.image} video={vista.video} ancho={vista.width}
-                   alto={vista.height} zonas={camara.zones} camaraId={camara.id} />
-          ) : (
-            <p className="rounded-3xl bg-panel p-10 text-center text-tinta-2">
-              Todavía no hay ninguna cámara con video. Carga uno para empezar.
-            </p>
-          )}
-        </div>
-        {camara?.descripcion && (
-          <p className="mt-2 text-tinta-2">{camara.descripcion}</p>
         )}
       </section>
     </Marco>
