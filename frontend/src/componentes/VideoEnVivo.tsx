@@ -10,15 +10,22 @@ export const CAPAS: Capa[] = ["normal", "calor", "rutas", "zonas", "personas"];
 export type CamaraEnVivo = {
   id: number; name: string; negocio: string; negocio_id: number;
   tipo: "youtube" | "archivo" | "stream"; youtube_id: string | null; video: string | null;
-  width: number; height: number; viva: boolean; gente_ahora: number; zonas: Zona[];
+  width: number; height: number; viva: boolean; gente_ahora: number; clientes?: number | null; trabajadores?: number | null; zonas: Zona[];
 };
 
 type Calor = { grid: number[][]; cols: number; rows: number };
 
 const ETIQUETA: Record<Capa, string> = { normal: "Normal", calor: "Calor", rutas: "Rutas", zonas: "Zonas", personas: "Personas" };
 
+// Pie de la tarjeta: "N clientes · M trabajadores" si el detector ya clasificó; si no, el total.
+export function textoPersonas(c: Pick<CamaraEnVivo, "gente_ahora" | "clientes" | "trabajadores">): string {
+  const { gente_ahora: n, clientes, trabajadores } = c;
+  if (clientes == null || trabajadores == null) return `${n} persona${n === 1 ? "" : "s"}`;
+  return `${clientes} cliente${clientes === 1 ? "" : "s"} · ${trabajadores} trabajador${trabajadores === 1 ? "" : "es"}`;
+}
+
 export function VideoEnVivo({ camara, capaGlobal }: { camara: CamaraEnVivo; capaGlobal: Capa }) {
-  const { id, name, negocio, tipo, youtube_id, video, viva, gente_ahora, zonas } = camara;
+  const { id, name, negocio, tipo, youtube_id, video, viva, zonas } = camara;
   const [capa, setCapa] = useState<Capa>(capaGlobal);
   const [calor, setCalor] = useState<Calor | null>(null);
   const [rutas, setRutas] = useState<[number, number][][]>([]);
@@ -118,7 +125,7 @@ export function VideoEnVivo({ camara, capaGlobal }: { camara: CamaraEnVivo; capa
         <span className="font-medium">{name}</span>
         <span className="text-papel/60">{negocio}</span>
         <span className={`ml-auto ${viva ? "" : "font-semibold text-fila-2"}`}>
-          {viva ? `${gente_ahora} persona${gente_ahora === 1 ? "" : "s"}` : "Sin señal"}
+          {viva ? textoPersonas(camara) : "Sin señal"}
         </span>
         <div className="flex overflow-hidden rounded border border-papel/30" role="group" aria-label="Capa">
           {CAPAS.map((c) => (

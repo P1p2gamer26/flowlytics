@@ -27,6 +27,7 @@ from vision.core.ringbuffer import FrameRingBuffer
 from vision.core.source import FrameSource, es_fuente_archivo, ruta_archivo
 from vision.core.tracking import crear_tracker
 from vision.core.zones import ZoneSet
+from vision.personal_demo import cargar_regiones, clasificar, pintar_roles
 from vision.pipeline import Pipeline
 
 CLIP_SECONDS = 10
@@ -85,6 +86,10 @@ class Command(BaseCommand):
 
         sx, sy = (ref_wh[0] / width, ref_wh[1] / height) if ref_wh else (1.0, 1.0)
         grid_acc = GridAccumulator(ref_wh or (width, height))
+
+        # Cargar regiones de personal (trabajador vs cliente)
+        zonas_staff = [z.polygon for z in camera.zones.all() if z.contexto_efectivo == 'staff' or z.kind == 'staff']
+        regiones_norm = cargar_regiones(camera.source, zonas_staff=zonas_staff, ref_wh=ref_wh or (width, height))
 
         zona_muerta = None
         if camera.zona_muerta:
@@ -242,10 +247,11 @@ class Command(BaseCommand):
                 # Escribir frame anotado y JSON en vivo cada ~2 s
                 if ahora - ultimo_en_vivo >= 2.0:
                     try:
-                        personas = len(result.detections)
-                        frame_anotado = annotator.annotate(frame.copy(), result.detections)
-                        cv2.putText(frame_anotado, f"Personas: {personas}", (10, 30),
-                                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
+                        xyxy_list = result.detections.xyxy
+                        roles = clasificar(xyxy_list, regiones_norm, (width, height))
+                        trabajadores = sum(1 for r in roles if r)
+                        clientes = len(roles) - trabajadores
+                        frame_anotado = pintar_roles(frame.copy(), xyxy_list, roles)
                         tmp_jpg = jpg_path + ".tmp"
                         ok, buf = cv2.imencode(".jpg", frame_anotado)
                         if ok:
@@ -254,7 +260,7 @@ class Command(BaseCommand):
                             os.replace(tmp_jpg, jpg_path)
                         tmp_json = json_path + ".tmp"
                         with open(tmp_json, "w") as f:
-                            json.dump({"personas": personas, "t": time.time()}, f)
+                            json.dump({"personas": len(roles), "clientes": clientes, "trabajadores": trabajadores, "t": time.time()}, f)
                         os.replace(tmp_json, json_path)
                     except Exception as exc:
                         # La vista en vivo es accesoria: que no tumbe el análisis.

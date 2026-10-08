@@ -1,0 +1,17 @@
+{
+  "_nota": "Regiones 'detras del mostrador' para la demo. Poligonos en pixeles de un frame de referencia 854x480, por nombre de archivo de video. Quien pise dentro (pie de la caja) es trabajador.",
+  "ref": [854, 480],
+  "regiones": {
+    "super_caja.mp4": [
+      [[325, 120], [420, 100], [450, 235], [370, 262], [325, 230]],
+      [[590, 120], [720, 95], [800, 120], [790, 240], [610, 235]]
+    ],
+    "tienda_iprox.mp4": [
+      [[40, 90], [230, 90], [250, 205], [40, 235]]
+    ],
+    "tienda_usa.mp4": [
+      [[80, 60], [290, 60], [300, 195], [80, 205]],
+      [[570, 0], [710, 0], [710, 130], [570, 130]]
+    ]
+  }
+}

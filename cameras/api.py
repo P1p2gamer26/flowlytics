@@ -39,6 +39,27 @@ def _en_vivo(camera_id, max_edad=30):
     return data.get("personas", 0) if time.time() - data.get("t", 0) < max_edad else None
 
 
+def _roles_en_vivo(camera_id, max_edad=30):
+    """Clientes y trabajadores que el worker vio hace menos de `max_edad` s.
+
+    Lee el mismo archivo en_vivo/<id>.json. Devuelve (clientes, trabajadores)
+    o (None, None) si no hay dato fresco o no tiene los campos nuevos.
+    """
+    ruta = os.path.join(settings.MEDIA_ROOT, "en_vivo", f"{camera_id}.json")
+    try:
+        with open(ruta) as f:
+            data = json.load(f)
+    except (OSError, ValueError):
+        return None, None
+    if time.time() - data.get("t", 0) >= max_edad:
+        return None, None
+    clientes = data.get("clientes")
+    trabajadores = data.get("trabajadores")
+    if clientes is None or trabajadores is None:
+        return None, None
+    return clientes, trabajadores
+
+
 def _sondear_tcp(host, puerto, timeout=3.0):
     """¿Hay algo escuchando ahí? Distingue 'apagada' de 'contraseña mala'."""
     import socket
@@ -669,6 +690,8 @@ def camaras_en_vivo_view(request):
         if fresco is not None:
             gente_ahora, viva = fresco, True
 
+        clientes, trabajadores = _roles_en_vivo(camara.pk)
+
         # zonas
         zonas = [
             {"id": z.id, "name": z.name, "kind": z.kind, "polygon": z.polygon}
@@ -687,6 +710,8 @@ def camaras_en_vivo_view(request):
             "height": h,
             "viva": viva,
             "gente_ahora": gente_ahora,
+            "clientes": clientes,
+            "trabajadores": trabajadores,
             "zonas": zonas,
         })
 
