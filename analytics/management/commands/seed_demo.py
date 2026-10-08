@@ -13,6 +13,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from analytics.models import CrossingWindow, Event, MetricWindow
+from analytics.avisos_demo import sembrar_avisos
 from cameras.models import Camera, Zone
 from tenancy.models import Business, Profile
 
@@ -73,6 +74,7 @@ class Command(BaseCommand):
                         camera=cam, kind="overcrowding", zone_name="Sala",
                         value=personas, occurred_at=inicio)
 
+        sembrar_avisos(biz)
         self.stdout.write(self.style.SUCCESS(
             f"Demo sembrado: negocio '{biz.name}', usuario 'demo' / 'demo12345', "
             f"{opts['dias']} días de métricas."))

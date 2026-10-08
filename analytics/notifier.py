@@ -8,7 +8,7 @@ from datetime import timedelta
 from django.utils import timezone
 
 from .horario import en_horario
-from .models import AlertDelivery
+from .models import AlertDelivery, AlertRule
 
 
 class NullBackend:
@@ -33,7 +33,7 @@ def _post_https(url, payload):
 
     data = json.dumps(payload).encode()
     req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"})
-    urllib.request.urlopen(req, timeout=10).close()   # ponytail: stdlib, sin dep 'requests'
+    urllib.request.urlopen(req, timeout=10).close()
 
 
 class EmailBackend:
@@ -55,8 +55,19 @@ class EmailBackend:
                   [destino], fail_silently=False)
 
 
+class RegistroBackend:
+    """Backend que no envía nada: la AlertDelivery es el registro."""
+
+    def enviar(self, destino, mensaje):
+        pass
+
+
 def backend_de(rule):
-    """El canal que eligió el dueño manda; webhook sigue siendo el suelo."""
+    """El canal que eligió el dueño manda; webhook sigue siendo el suelo.
+    Para acciones operativas (distintas de 'avisar') se usa RegistroBackend.
+    """
+    if rule.accion != "avisar":
+        return RegistroBackend()
     return EmailBackend() if rule.canal == "email" else WebhookBackend()
 
 
@@ -65,38 +76,68 @@ class Notifier:
         self._backend = backend
         self._ahora = ahora
 
-    def notificar(self, rule, mensaje):
+    def notificar(self, rule, mensaje, camara="", simulado=False):
         ahora = self._ahora()
-        # Con el local cerrado no se despierta a nadie. Queda registrado para
-        # que el dueño vea que hubo algo y que se decidió no avisarle: un aviso
-        # perdido en silencio es peor que uno a deshora.
         if not en_horario(rule.business, ahora):
-            return AlertDelivery.objects.create(rule=rule, mensaje=mensaje,
-                                                resultado="fuera_hora")
+            return AlertDelivery.objects.create(
+                rule=rule, mensaje=mensaje, resultado="fuera_hora",
+                camara=camara, simulado=simulado
+            )
 
         if rule.ultima_notificacion and \
                 ahora - rule.ultima_notificacion < timedelta(minutes=rule.minutos_silencio):
-            return AlertDelivery.objects.create(rule=rule, mensaje=mensaje, resultado="silenciada")
+            return AlertDelivery.objects.create(
+                rule=rule, mensaje=mensaje, resultado="silenciada",
+                camara=camara, simulado=simulado
+            )
 
         try:
             self._backend.enviar(rule.destino, mensaje)
         except Exception as exc:
-            return AlertDelivery.objects.create(rule=rule, mensaje=mensaje,
-                                                resultado="fallo", error=str(exc)[:500])
+            return AlertDelivery.objects.create(
+                rule=rule, mensaje=mensaje, resultado="fallo",
+                error=str(exc)[:500], camara=camara, simulado=simulado
+            )
 
         rule.ultima_notificacion = ahora
         rule.save(update_fields=["ultima_notificacion"])
-        return AlertDelivery.objects.create(rule=rule, mensaje=mensaje, resultado="enviada")
+        resultado = "registrada" if isinstance(self._backend, RegistroBackend) else "enviada"
+        return AlertDelivery.objects.create(
+            rule=rule, mensaje=mensaje, resultado=resultado,
+            camara=camara, simulado=simulado
+        )
 
 
-def notificar_evento(event, notifier=None):
+def _valor_legible(event):
+    if event.kind == "long_queue":
+        return f"{round(event.value / 60)} min de espera"
+    if event.kind == "empty_counter":
+        return "sin nadie atendiendo"
+    return f"{round(event.value)} personas"
+
+
+def _mensaje_por_accion(rule, event):
+    """Genera el mensaje según la acción de la regla."""
+    if rule.accion == "avisar":
+        return (f"[{event.camera.business.name}] {event.get_kind_display()} "
+                f"en {event.zone_name}: {_valor_legible(event)}")
+
+    defaults = {
+        "abrir_caja": "Pedir a un empleado que abra la segunda caja",
+        "mensaje_personal": f"Mensaje al personal: revisar {event.zone_name}",
+        "registrar": "Registrado en el reporte",
+    }
+    base = rule.texto or defaults.get(rule.accion, "Acción operativa")
+    return f"{base} — {event.get_kind_display()} en {event.zone_name}"
+
+
+def notificar_evento(event, notifier=None, simulado=False):
     reglas = AlertRule.objects.filter(business=event.camera.business,
                                       tipo_evento=event.kind, activa=True)
-    msg = (f"[{event.camera.business.name}] {event.get_kind_display()} "
-           f"en {event.zone_name}: {event.value}")
+    entregas = []
     for regla in reglas:
-        # Un Notifier por regla: cada una puede ir por un canal distinto.
-        (notifier or Notifier(backend_de(regla))).notificar(regla, msg)
-
-
-from .models import AlertRule  # noqa: E402  (evita import circular arriba)
+        msg = _mensaje_por_accion(regla, event)
+        n = notifier or Notifier(backend_de(regla))
+        entrega = n.notificar(regla, msg, camara=event.camera.name, simulado=simulado)
+        entregas.append(entrega)
+    return entregas

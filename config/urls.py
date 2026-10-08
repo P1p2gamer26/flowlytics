@@ -18,7 +18,7 @@ from django.contrib import admin
 from django.urls import include, path
 
 from analytics.api import (events_view, negocio_actual_view, panel_extra_view, summary_view,
-                           avisos_view, aviso_detalle_view, aviso_horario_view)
+                           avisos_view, aviso_detalle_view, aviso_horario_view, simular_aviso_view)
 from analytics.reportes_views import reporte_csv, reporte_pdf
 from cameras.api import (
     camara_ahora_view,
@@ -53,6 +53,7 @@ urlpatterns = [
     path("api/panel-extra/", panel_extra_view),
     path("api/avisos/", avisos_view),
     path("api/avisos/horario/", aviso_horario_view),
+    path("api/avisos/simular/", simular_aviso_view),
     path("api/avisos/<int:regla_id>/", aviso_detalle_view),
     path("api/camaras/", camaras_view),
     path("api/camaras/en_vivo/", camaras_en_vivo_view),

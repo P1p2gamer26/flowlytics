@@ -1,5 +1,24 @@
 import { describe, expect, it } from "vitest";
-import { AVISOS, aUmbral, deUmbral, frase } from "./avisos";
+import { ACCIONES, AVISOS, PLANTILLAS, aUmbral, deUmbral, frase, fraseRegla, tonoDeEntrega } from "./avisos";
+
+describe("automatizaciones", () => {
+  it("la frase une disparador y acción", () => {
+    const t = fraseRegla({ tipo_evento: "long_queue", umbral: 240, canal: "webhook",
+                           destino: "", accion: "abrir_caja" });
+    expect(t).toContain("→ pedir a un empleado que abra la segunda caja");
+    expect(t).not.toContain("long_queue");
+  });
+  it("el tono: azul si la acción es operativa, el del evento si es aviso", () => {
+    expect(tonoDeEntrega({ tipo: "long_queue", accion: "abrir_caja" })).toBe("personal");
+    expect(tonoDeEntrega({ tipo: "long_queue", accion: "avisar" })).toBe("fila");
+  });
+  it("toda plantilla usa un tipo y una acción que existen", () => {
+    for (const p of PLANTILLAS) {
+      expect(AVISOS[p.tipo_evento]).toBeDefined();
+      expect(ACCIONES[p.accion]).toBeDefined();
+    }
+  });
+});
 
 describe("unidades", () => {
   it("la espera se pregunta en minutos y se guarda en segundos", () => {

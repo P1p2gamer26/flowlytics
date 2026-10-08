@@ -69,6 +69,17 @@ body {
   animation-delay: calc(var(--i) * 22ms);
 }
 
+/* Aviso que acaba de llegar (p. ej. al simular un evento): entra desde arriba y
+   un halo ámbar se apaga solo. */
+@keyframes aviso-entra {
+  from { transform: translateY(-10px); opacity: 0; box-shadow: 0 0 0 4px var(--color-lleno); }
+  to   { transform: translateY(0);     opacity: 1; box-shadow: 0 0 0 0 transparent; }
+}
+
+.aviso-nuevo {
+  animation: aviso-entra 1.6s cubic-bezier(.2, .8, .3, 1);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: .01ms !important;
