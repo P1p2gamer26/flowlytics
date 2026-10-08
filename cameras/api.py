@@ -499,25 +499,53 @@ def camara_progreso_view(request, camera_id):
 def camara_trayectorias_view(request, camera_id):
     """Recorridos guardados para la cámara: cada uno con su `track_id` y la
     lista de puntos ordenada por frame, para que el editor los dibuje.
-    Con ?minutos=N filtra a los últimos N minutos (máx. 300 trayectorias)."""
+    Con ?minutos=N filtra a los últimos N minutos (máx. 300 trayectorias).
+    Con ?segundos=N (>0) filtra por ended_at >= now-N (ignora minutos).
+    Con ?puntos=K (>0) recorta points a los últimos K."""
     camera = _camara_o_403(request.user, camera_id)
 
     qs = camera.trajectories.all()
-    minutos = request.query_params.get("minutos")
-    if minutos is not None:
+    segundos = request.query_params.get("segundos")
+    if segundos is not None:
         try:
-            m = int(minutos)
-            if m > 0:
-                desde = timezone.now() - timedelta(minutes=m)
-                qs = qs.filter(started_at__gte=desde)
+            s = int(segundos)
+            if s > 0:
+                desde = timezone.now() - timedelta(seconds=s)
+                qs = qs.filter(ended_at__gte=desde)
+        except ValueError:
+            pass
+    else:
+        minutos = request.query_params.get("minutos")
+        if minutos is not None:
+            try:
+                m = int(minutos)
+                if m > 0:
+                    desde = timezone.now() - timedelta(minutes=m)
+                    qs = qs.filter(started_at__gte=desde)
+            except ValueError:
+                pass
+
+    puntos = request.query_params.get("puntos")
+    max_puntos = None
+    if puntos is not None:
+        try:
+            k = int(puntos)
+            if k > 0:
+                max_puntos = k
         except ValueError:
             pass
 
-    recorridos = [
-        {"track_id": t.track_id, "points": t.points,
-         "started_at": t.started_at.isoformat()}
-        for t in qs.order_by("-started_at")[:300]
-    ]
+    recorridos = []
+    for t in qs.order_by("-started_at")[:300]:
+        pts = t.points
+        if max_puntos is not None and len(pts) > max_puntos:
+            pts = pts[-max_puntos:]
+        recorridos.append({
+            "track_id": t.track_id,
+            "points": pts,
+            "started_at": t.started_at.isoformat(),
+            "ended_at": t.ended_at.isoformat(),
+        })
     return Response({"recorridos": recorridos})
 
 

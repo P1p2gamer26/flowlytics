@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { get } from "../api";
-import { colorDeCalor } from "./MapaCalor";
+import { CapaCalor } from "./CapaCalor";
+import { estela } from "./Rastros";
 
 type Zona = { id: number; name: string; kind: string; polygon: [number, number][] };
 export type Capa = "normal" | "calor" | "rutas" | "zonas" | "personas";
@@ -14,58 +15,102 @@ export type CamaraEnVivo = {
 };
 
 type Calor = { grid: number[][]; cols: number; rows: number };
+type Trayectoria = { track_id: number; points: [number, number][]; started_at: string; ended_at: string };
 
+// Canvas no entiende var(--...): color propio, visible sobre video.
+const COLOR_ESTELA = "#ffd23f";
 const ETIQUETA: Record<Capa, string> = { normal: "Normal", calor: "Calor", rutas: "Rutas", zonas: "Zonas", personas: "Personas" };
 
 export function VideoEnVivo({ camara, capaGlobal }: { camara: CamaraEnVivo; capaGlobal: Capa }) {
   const { id, name, negocio, tipo, youtube_id, video, viva, gente_ahora, zonas } = camara;
   const [capa, setCapa] = useState<Capa>(capaGlobal);
   const [calor, setCalor] = useState<Calor | null>(null);
-  const [rutas, setRutas] = useState<[number, number][][]>([]);
+  const [trayectorias, setTrayectorias] = useState<Trayectoria[]>([]);
   const [tick, setTick] = useState(0);
+  const canvasRutasRef = useRef<HTMLCanvasElement>(null);
+  const w = camara.width || 1280;
+  const h = camara.height || 720;
 
-  // El selector global manda; cada celda puede cambiarla después.
   useEffect(() => setCapa(capaGlobal), [capaGlobal]);
 
-  // Tick cada 2s para refrescar la capa "personas"
   useEffect(() => {
     if (capa !== "personas") return;
     const reloj = setInterval(() => setTick(t => t + 1), 2000);
     return () => clearInterval(reloj);
   }, [capa]);
 
-  // Carga la capa al elegirla y la refresca cada 30 s: los workers siguen escribiendo.
   useEffect(() => {
     if (capa !== "calor" && capa !== "rutas") return;
-    const cargar = () => {
+    const cargar = async () => {
       if (capa === "calor") {
-        // Ayer y hoy en fecha local: el servidor agrupa por día UTC y aquí es UTC-5.
         const hoy = new Date().toLocaleDateString("en-CA");
         const ayer = new Date(Date.now() - 86400000).toLocaleDateString("en-CA");
-        get<Calor>(`/api/camaras/${id}/mapa_calor/?desde=${ayer}&hasta=${hoy}`)
-          .then((r) => setCalor(r.grid.length ? r : null))
-          .catch(() => setCalor(null));
+        try {
+          const r = await get<Calor>(`/api/camaras/${id}/mapa_calor/?desde=${ayer}&hasta=${hoy}`);
+          setCalor(r.grid.length ? r : null);
+        } catch {
+          setCalor(null);
+        }
       } else {
-        get<{ recorridos: { points: [number, number][] }[] }>(`/api/camaras/${id}/trayectorias/?minutos=30`)
-          .then((r) => setRutas(r.recorridos.map((t) => t.points).filter((p) => p.length > 1)))
-          .catch(() => setRutas([]));
+        try {
+          const r = await get<{ recorridos: Trayectoria[] }>(`/api/camaras/${id}/trayectorias/?segundos=90&puntos=6`);
+          setTrayectorias(r.recorridos);
+        } catch {
+          setTrayectorias([]);
+        }
       }
     };
     cargar();
-    const reloj = setInterval(cargar, 30_000);
+    const intervalMs = capa === "rutas" ? 2000 : 30000;
+    const reloj = setInterval(cargar, intervalMs);
     return () => clearInterval(reloj);
   }, [capa, id]);
 
-  // Coordenadas de zonas, calor y rutas están en píxeles del frame de referencia.
-  const w = camara.width || 1280;
-  const h = camara.height || 720;
+  useEffect(() => {
+    const canvas = canvasRutasRef.current;
+    if (!canvas || capa !== "rutas") return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    canvas.width = w;
+    canvas.height = h;
+    ctx.clearRect(0, 0, w, h);
+
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+
+    for (const t of trayectorias) {
+      // Los puntos no llevan tiempo y se guardan al cerrar cada ventana (~60 s):
+      // por eso se recortan a los últimos 6 (~3 s a ~2 fps) en vez de filtrar por timestamp.
+      const segmentos = estela(t.points, 6);
+      ctx.strokeStyle = COLOR_ESTELA;
+      for (const s of segmentos) {
+        ctx.lineWidth = s.grosor;
+        ctx.globalAlpha = s.opacidad;
+        ctx.beginPath();
+        ctx.moveTo(s.desde[0], s.desde[1]);
+        ctx.lineTo(s.hasta[0], s.hasta[1]);
+        ctx.stroke();
+      }
+      if (t.points.length > 0) {
+        const cabeza = t.points[t.points.length - 1];
+        ctx.globalAlpha = 1;
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = "white";
+        ctx.fillStyle = COLOR_ESTELA;
+        ctx.beginPath();
+        ctx.arc(cabeza[0], cabeza[1], 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      }
+    }
+  }, [trayectorias, capa, w, h]);
 
   return (
     <div className="overflow-hidden rounded border border-tinta-2/15 bg-noche">
       <div className="relative w-full" style={{ aspectRatio: `${w} / ${h}` }}>
         {tipo === "youtube" && youtube_id && (
           <iframe title={name} allow="autoplay; encrypted-media"
-                  // Sin Referer YouTube responde "Error 153"; Django manda same-origin por defecto.
                   referrerPolicy="strict-origin-when-cross-origin"
                   src={`https://www.youtube.com/embed/${youtube_id}?autoplay=1&mute=1&controls=0&playsinline=1&rel=0`}
                   className="pointer-events-none absolute inset-0 h-full w-full" />
@@ -87,17 +132,27 @@ export function VideoEnVivo({ camara, capaGlobal }: { camara: CamaraEnVivo; capa
             onError={() => {}}
           />
         )}
+        {capa === "calor" && calor && (
+          <CapaCalor
+            grid={calor.grid}
+            cols={calor.cols}
+            rows={calor.rows}
+            ancho={w}
+            alto={h}
+            opacidad={0.7}
+          />
+        )}
+        {capa === "rutas" && (
+          <canvas
+            ref={canvasRutasRef}
+            className="pointer-events-none absolute inset-0 h-full w-full"
+            aria-hidden="true"
+            width={w}
+            height={h}
+          />
+        )}
         <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" aria-hidden="true"
              className="pointer-events-none absolute inset-0 h-full w-full">
-          {capa === "calor" && calor && calor.grid.map((fila, r) => fila.map((v, c) => (
-            <rect key={`${r}-${c}`} x={(c * w) / calor.cols} y={(r * h) / calor.rows}
-                  width={w / calor.cols} height={h / calor.rows}
-                  fill={colorDeCalor(v)} fillOpacity={v * 0.7} />
-          )))}
-          {capa === "rutas" && rutas.map((p, i) => (
-            <polyline key={i} points={p.map(([x, y]) => `${x},${y}`).join(" ")} fill="none"
-                      stroke="var(--color-alerta)" strokeWidth={3} strokeLinecap="round" opacity={0.6} />
-          ))}
           {capa === "zonas" && zonas.map((z) => (
             <g key={z.id}>
               <polygon points={z.polygon.map((p) => p.join(",")).join(" ")} fill="var(--color-zona)"
@@ -131,7 +186,6 @@ export function VideoEnVivo({ camara, capaGlobal }: { camara: CamaraEnVivo; capa
         <Link to={`/camaras/${id}/`} className="text-xs text-papel/80 underline">Detalle</Link>
       </div>
       {capa === "calor" && !calor && <p className="px-2 pb-2 text-xs text-papel/60">Sin datos de calor en las últimas 24 h</p>}
-      {capa === "rutas" && !rutas.length && <p className="px-2 pb-2 text-xs text-papel/60">Nadie recorrió la escena en los últimos 30 min.</p>}
     </div>
   );
-}
+}

@@ -1,14 +1,11 @@
 import { useEffect, useState } from "react";
 import { get } from "../api";
+import { CapaCalor } from "./CapaCalor";
 
 type Zona = { id: number; name: string; polygon: [number, number][] };
 type MapaCalorRespuesta = { grid: number[][]; cols: number; rows: number;
                             personas: number; mensaje: string };
 
-// Los tres colores de la escala del sistema, hardcodeados a propósito:
-// coinciden con --color-calma / --color-lleno / --color-fila de estilos.css.
-// Si esos tres cambian, este archivo también — leer `getComputedStyle` no es
-// testeable sin DOM y el test tiene que correr en Node puro.
 const CALMA: [number, number, number] = [0x0f, 0x7a, 0x57];
 const LLENO: [number, number, number] = [0xe9, 0xa1, 0x3b];
 const FILA: [number, number, number] = [0xd6, 0x43, 0x2c];
@@ -21,11 +18,21 @@ function mezclar(a: [number, number, number], b: [number, number, number], t: nu
   return `#${hex(r)}${hex(g)}${hex(bl)}`;
 }
 
-/** Interpola por tramos entre calma (0), lleno (0.5) y fila (1). */
 export function colorDeCalor(valor: number): string {
   const v = Math.min(1, Math.max(0, valor));
   if (v <= 0.5) return mezclar(CALMA, LLENO, v / 0.5);
   return mezclar(LLENO, FILA, (v - 0.5) / 0.5);
+}
+
+export function colorCelda(valor: number): [number, number, number, number] {
+  const v = Math.min(1, Math.max(0, valor));
+  if (v < 0.05) return [0, 0, 0, 0];
+  const color = colorDeCalor(v);
+  const r = parseInt(color.slice(1, 3), 16);
+  const g = parseInt(color.slice(3, 5), 16);
+  const b = parseInt(color.slice(5, 7), 16);
+  const alfa = Math.min(255, Math.round(255 * Math.min(1, v * 1.4)));
+  return [r, g, b, alfa];
 }
 
 export function MapaCalor({ camaraId, ancho, alto, imagen, zonas, desde, hasta, franja }: {
@@ -53,20 +60,13 @@ export function MapaCalor({ camaraId, ancho, alto, imagen, zonas, desde, hasta, 
   }
 
   const { grid, cols, rows } = datos;
-  const cellW = ancho / cols;
-  const cellH = alto / rows;
 
   return (
     <figure className="relative">
       <img src={imagen} alt="" width={ancho} height={alto} className="w-full rounded" />
+      <CapaCalor grid={grid} cols={cols} rows={rows} ancho={ancho} alto={alto} />
       <svg viewBox={`0 0 ${ancho} ${alto}`}
            className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden="true">
-        {grid.map((fila, r) =>
-          fila.map((valor, c) => (
-            <rect key={`${r}-${c}`} x={c * cellW} y={r * cellH} width={cellW} height={cellH}
-                  fill={colorDeCalor(valor)} fillOpacity={valor} />
-          )),
-        )}
         {zonas.map((z) => (
           <polygon key={z.id} points={z.polygon.map((p) => p.join(",")).join(" ")}
                    fill="var(--color-zona)" fillOpacity="0.12"
@@ -75,4 +75,4 @@ export function MapaCalor({ camaraId, ancho, alto, imagen, zonas, desde, hasta, 
       </svg>
     </figure>
   );
-}
+}
