@@ -27,6 +27,8 @@ from vision.core.ringbuffer import FrameRingBuffer
 from vision.core.source import FrameSource, es_fuente_archivo, ruta_archivo
 from vision.core.tracking import crear_tracker
 from vision.core.zones import ZoneSet
+from vision.estelas import EstelasVivas
+from vision.personal_demo import cargar_regiones, clasificar, pintar_roles
 from vision.pipeline import Pipeline
 
 CLIP_SECONDS = 10
@@ -86,6 +88,10 @@ class Command(BaseCommand):
         sx, sy = (ref_wh[0] / width, ref_wh[1] / height) if ref_wh else (1.0, 1.0)
         grid_acc = GridAccumulator(ref_wh or (width, height))
 
+        # Cargar regiones de personal (trabajador vs cliente)
+        zonas_staff = [z.polygon for z in camera.zones.all() if z.contexto_efectivo == 'staff' or z.kind == 'staff']
+        regiones_norm = cargar_regiones(camera.source, zonas_staff=zonas_staff, ref_wh=ref_wh or (width, height))
+
         zona_muerta = None
         if camera.zona_muerta:
             poly = np.array(camera.zona_muerta, dtype=float)
@@ -144,7 +150,12 @@ class Command(BaseCommand):
         os.makedirs(en_vivo_dir, exist_ok=True)
         jpg_path = os.path.join(en_vivo_dir, f"{camera.pk}.jpg")
         json_path = os.path.join(en_vivo_dir, f"{camera.pk}.json")
+        estelas_path = os.path.join(en_vivo_dir, f"{camera.pk}_estelas.json")
         ultimo_en_vivo = 0.0
+        ultimo_estelas = 0.0
+
+        # Estelas vivas: últimos ~3 s de cada persona para la capa Rutas
+        estelas = EstelasVivas(max_puntos=6, max_edad_s=3.0)
 
         fps_objetivo = settings.SAMPLE_FPS
         base_epoch = time.time()
@@ -207,6 +218,12 @@ class Command(BaseCommand):
                                  indice_video / (fuente.fps_archivo or fps_objetivo), sx, sy)
                 _acumular_pisadas(grid_acc, result.detections, sx, sy)
 
+                # Alimentar estelas vivas con los mismos pies escalados
+                ahora_mono = time.monotonic()
+                pies = _pies_de(result.detections, sx, sy)
+                if pies:
+                    estelas.observar(pies, ahora_mono)
+
                 if result.summary is not None:
                     duracion_ventana = time.monotonic() - ventana_inicio
                     fps_medido = frames_ventana / duracion_ventana if duracion_ventana > 0 else fps_objetivo
@@ -239,13 +256,14 @@ class Command(BaseCommand):
                     latir()
                     ultimo_latido = ahora
 
-                # Escribir frame anotado y JSON en vivo cada ~2 s
-                if ahora - ultimo_en_vivo >= 2.0:
+                # Escribir frame anotado y JSON en vivo cada ~1 s (Personas y Rutas lo usan de fondo)
+                if ahora - ultimo_en_vivo >= 1.0:
                     try:
-                        personas = len(result.detections)
-                        frame_anotado = annotator.annotate(frame.copy(), result.detections)
-                        cv2.putText(frame_anotado, f"Personas: {personas}", (10, 30),
-                                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
+                        xyxy_list = result.detections.xyxy
+                        roles = clasificar(xyxy_list, regiones_norm, (width, height))
+                        trabajadores = sum(1 for r in roles if r)
+                        clientes = len(roles) - trabajadores
+                        frame_anotado = pintar_roles(frame.copy(), xyxy_list, roles)
                         tmp_jpg = jpg_path + ".tmp"
                         ok, buf = cv2.imencode(".jpg", frame_anotado)
                         if ok:
@@ -254,12 +272,24 @@ class Command(BaseCommand):
                             os.replace(tmp_jpg, jpg_path)
                         tmp_json = json_path + ".tmp"
                         with open(tmp_json, "w") as f:
-                            json.dump({"personas": personas, "t": time.time()}, f)
+                            json.dump({"personas": len(roles), "clientes": clientes, "trabajadores": trabajadores, "t": time.time()}, f)
                         os.replace(tmp_json, json_path)
                     except Exception as exc:
                         # La vista en vivo es accesoria: que no tumbe el análisis.
                         self.stderr.write(f"no se pudo escribir la vista en vivo: {exc}")
                     ultimo_en_vivo = ahora
+
+                # Escribir estelas vivas cada ~0.5 s
+                if ahora - ultimo_estelas >= 0.5:
+                    try:
+                        tmp_estelas = estelas_path + ".tmp"
+                        with open(tmp_estelas, "w") as f:
+                            json.dump({"recorridos": estelas.recientes(ahora), "t": time.time()}, f)
+                        os.replace(tmp_estelas, estelas_path)
+                    except Exception as exc:
+                        # La vista en vivo es accesoria: que no tumbe el análisis.
+                        self.stderr.write(f"no se pudo escribir estelas en vivo: {exc}")
+                    ultimo_estelas = ahora
 
                 if opts["preview"]:
                     cv2.imshow("preview", annotator.annotate(frame.copy(), result.detections))
@@ -324,18 +354,32 @@ class Command(BaseCommand):
         tmp.unlink(missing_ok=True)
 
 
-def _acumular_pisadas(grid_acc, detecciones, sx, sy):
-    """Añade el pie de cada persona rastreada de este cuadro a la rejilla,
-    escalado a la resolución de referencia de la cámara."""
+def _pies_de(detecciones, sx: float, sy: float) -> list[tuple[int, tuple[float, float]]]:
+    """Extrae el pie de cada persona rastreada, escalado a referencia.
+
+    Args:
+        detecciones: Objeto Detections de supervision con tracker_id.
+        sx, sy: Factores de escala a la resolución de referencia.
+
+    Returns:
+        Lista de (track_id, (x, y)) en coordenadas de referencia.
+    """
     ids = getattr(detecciones, "tracker_id", None)
     if ids is None or len(detecciones) == 0:
-        return
+        return []
     pies = []
     for caja, tid in zip(detecciones.xyxy, ids):
         if tid is None:
             continue
         x, y = pie_de_caja(caja)
         pies.append((int(tid), (x * sx, y * sy)))
+    return pies
+
+
+def _acumular_pisadas(grid_acc, detecciones, sx, sy):
+    """Añade el pie de cada persona rastreada de este cuadro a la rejilla,
+    escalado a la resolución de referencia de la cámara."""
+    pies = _pies_de(detecciones, sx, sy)
     if pies:
         grid_acc.observe(pies)
 

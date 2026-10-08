@@ -228,28 +228,28 @@ export default function Camara() {
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-sm text-tinta-2">Zonas de tu negocio:</span>
             {camara.rubro.zonas.map((z) => (
-              <button key={z.name} type="button"
+<button key={z.name} type="button"
                       onClick={() => { setNombre(z.name); setTipo(z.kind); }}
-                      className={`rounded border px-3 py-1 text-sm ${
-                        nombre === z.name ? "border-zona text-zona" : "border-tinta-2/40"}`}>
-                {z.name}
-              </button>
+                      className={`rounded-full px-3 py-1 text-sm ring-1 ring-tinta-2/20 bg-panel ${
+                        nombre === z.name ? "ring-zona text-zona" : "ring-tinta-2/20"}`}>
+                  {z.name}
+                </button>
             ))}
           </div>
         ) : null}
         <label className="text-sm text-tinta-2" htmlFor="nombre-zona">Nombre</label>
         <input id="nombre-zona" value={nombre} onChange={(e) => setNombre(e.target.value)}
-               className="rounded border border-tinta-2/30 bg-panel px-3 py-1.5" />
-        <button onClick={guardar} className="rounded bg-zona px-4 py-2 text-white">
+               className="rounded-full bg-panel px-4 py-2 ring-1 ring-tinta-2/20" />
+        <button onClick={guardar} className="rounded-full bg-marca px-5 py-2.5 font-semibold text-white hover:bg-marca-2">
           Guardar zona
         </button>
-        <button onClick={() => setPuntos([])} className="rounded border border-tinta-2/40 px-4 py-2">
+        <button onClick={() => setPuntos([])} className="rounded-full bg-panel px-5 py-2.5 font-semibold text-tinta ring-1 ring-tinta-2/20 hover:bg-marca-suave">
           Limpiar
         </button>
-        <button onClick={sugerir} className="rounded border border-tinta-2/40 px-4 py-2">
+        <button onClick={sugerir} className="rounded-full bg-panel px-5 py-2.5 font-semibold text-tinta ring-1 ring-tinta-2/20 hover:bg-marca-suave">
           Sugerir de nuevo
         </button>
-        <button onClick={analizar} className="rounded bg-tinta px-4 py-2 text-papel">
+        <button onClick={analizar} className="rounded-full bg-marca px-5 py-2.5 font-semibold text-white hover:bg-marca-2">
           Analizar video
         </button>
         {recorridos.length > 0 && (
@@ -332,13 +332,13 @@ export default function Camara() {
             Desde
             <input id="desde-calor" type="date" value={desdeCalor}
                    onChange={(e) => setDesdeCalor(e.target.value)}
-                   className="rounded border border-tinta-2/30 bg-panel px-2 py-1" />
+                   className="rounded-full bg-panel px-4 py-2 ring-1 ring-tinta-2/20" />
           </label>
           <label className="flex items-center gap-2 text-sm" htmlFor="hasta-calor">
             Hasta
             <input id="hasta-calor" type="date" value={hastaCalor}
                    onChange={(e) => setHastaCalor(e.target.value)}
-                   className="rounded border border-tinta-2/30 bg-panel px-2 py-1" />
+                   className="rounded-full bg-panel px-4 py-2 ring-1 ring-tinta-2/20" />
           </label>
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={compararFranjas}

@@ -14,14 +14,13 @@ type Camara = {
 export function CeldaCamara({ camara, imagen }: { camara: Camara; imagen?: string }) {
   return (
     <Link to={`/camaras/${camara.id}/`}
-          className={`relative block overflow-hidden rounded border
-                      ${camara.viva ? "border-tinta-2/15" : "border-fila"}`}>
+          className="relative block overflow-hidden rounded-3xl bg-panel p-6">
       {imagen
-        ? <img src={imagen} alt="" className="w-full aspect-video object-cover bg-noche" />
-        : <div className="w-full aspect-video bg-noche" />}
+        ? <img src={imagen} alt="" className="w-full aspect-video object-cover bg-noche rounded-xl" />
+        : <div className="w-full aspect-video bg-noche rounded-xl" />}
       <div className="absolute inset-x-0 bottom-0 flex items-center justify-between
-                      bg-noche/70 px-2 py-1 text-sm text-papel">
-        <span>{camara.name}</span>
+                      bg-noche/70 px-4 py-2 text-sm text-papel rounded-b-xl">
+        <span className="font-semibold">{camara.name}</span>
         {camara.viva
           ? <span>{camara.analizado ? `${camara.gente_ahora} persona${camara.gente_ahora === 1 ? "" : "s"}` : "Sin analizar"}</span>
           : <span className="text-fila-2 font-semibold">Sin señal</span>}

@@ -12,10 +12,20 @@ EVENT_KINDS = [
     ("empty_counter", "Caja desatendida"),
     ("overcrowding", "Aforo excedido"),
     ("crowded_queue", "Fila con mucha gente"),
+    ("entry_peak", "Pico de entradas"),
+    ("low_traffic", "Poco tráfico en una zona"),
 ]
 
 ALERT_TIPOS = EVENT_KINDS + [("camara_caida", "Cámara sin señal")]
 CANALES = [("webhook", "Webhook"), ("email", "Email")]
+# Qué hace la regla cuando se dispara. "avisar" manda por `canal`; las demás son
+# operativas: hoy se registran en el feed (simuladas), sin tocar ningún sistema externo.
+ACCIONES = [
+    ("avisar", "Avisarme"),
+    ("abrir_caja", "Pedir que abran la segunda caja"),
+    ("mensaje_personal", "Mandar mensaje al personal"),
+    ("registrar", "Registrar en el reporte"),
+]
 
 
 def _to_aware(epoch: float):
@@ -200,7 +210,10 @@ class AlertRule(models.Model):
     business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name="alert_rules")
     tipo_evento = models.CharField(max_length=30, choices=ALERT_TIPOS)
     canal = models.CharField(max_length=10, choices=CANALES, default="webhook")
-    destino = models.CharField(max_length=300, help_text="URL del webhook.")
+    destino = models.CharField(max_length=300, blank=True, default="", help_text="URL del webhook o correo.")
+    accion = models.CharField(max_length=20, choices=ACCIONES, default="avisar")
+    texto = models.CharField(max_length=200, blank=True, default="",
+                             help_text="Mensaje propio para las acciones operativas.")
     umbral = models.FloatField(
         null=True, blank=True,
         help_text="A partir de cuánto avisar, en la unidad del tipo de aviso "
@@ -219,6 +232,8 @@ class AlertDelivery(models.Model):
     mensaje = models.TextField()
     resultado = models.CharField(max_length=12)   # enviada | silenciada | fallo
     error = models.TextField(blank=True, default="")
+    camara = models.CharField(max_length=80, blank=True, default="")
+    simulado = models.BooleanField(default=False)
     creado = models.DateTimeField(auto_now_add=True)
 
     class Meta:

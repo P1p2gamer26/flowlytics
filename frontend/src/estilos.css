@@ -9,27 +9,36 @@
    --------------------------------------------------------------------------- */
 @theme {
   /* Superficies */
-  --color-papel: #f2f3ee;      /* blanco con matiz verde: papel de tienda, no crema */
+  --color-papel: #E4E6EA;
   --color-panel: #ffffff;
-  --color-noche: #10201c;      /* verde muy oscuro: la cinta del dia */
-  --color-noche-2: #1b332c;
+  --color-noche: #0C162F;
+  --color-noche-2: #16244A;
 
   /* Tinta */
-  --color-tinta: #18231f;
-  --color-tinta-2: #5a6b64;
-  --color-tinta-clara: #a9b5af;
+  --color-tinta: #0C162F;
+  --color-tinta-2: #5B6479;
+  --color-tinta-clara: #9AA1B2;
+
+  /* Marca y acento (nuevos, de Canva Pitch 1) */
+  --color-marca: #2868F2;
+  --color-marca-2: #1E4FC4;
+  --color-marca-suave: #B9CEFB;
+  --color-acento: #FF0246;
 
   /* Estados del local. Este es el corazon del sistema: tres colores que
      significan algo concreto y se usan SIEMPRE con el mismo significado. */
-  --color-calma: #0f7a57;      /* verde toldo: hora tranquila */
-  --color-lleno: #e9a13b;      /* ambar de luz interior: hora de movimiento */
-  --color-fila: #d6432c;       /* rojo de rotulo: cola, pide actuar */
-  /* Azul solo para el personal marcado a mano: no compite con los tres de
+  --color-calma: #0F7A57;      /* verde toldo: hora tranquila */
+  --color-lleno: #E9A13B;      /* ambar de luz interior: hora de movimiento */
+  --color-fila: #FF0246;       /* rojo Canva: cola, pide actuar */
+  --color-fila-2: #FF6B8E;     /* rojo claro sobre navy */
+  /* Azul solo para el personal/zona marcado a mano: no compite con los tres de
      arriba porque no dice como esta la tienda, dice quien es quien. */
-  --color-personal: #2563c9;
+  --color-personal: #2868F2;
+  --color-zona: #2868F2;
+  --color-alerta: #E9A13B;
 
-  --font-display: "Bricolage Grotesque", system-ui, sans-serif;
-  --font-sans: "Instrument Sans", system-ui, sans-serif;
+  --font-display: "Montserrat", system-ui, sans-serif;
+  --font-sans: "Poppins", system-ui, sans-serif;
 
   --text-cifra: 3.25rem;
   --text-titular: 1.6rem;
@@ -39,7 +48,6 @@ body {
   background: var(--color-papel);
   color: var(--color-tinta);
   font-family: var(--font-sans);
-  font-feature-settings: "ss01";
 }
 
 :root {
@@ -48,9 +56,14 @@ body {
 
 /* Se navega con teclado sobre fondo claro: el foco tiene que verse. */
 :focus-visible {
-  outline: 2px solid var(--color-calma);
+  outline: 2px solid var(--color-marca);
   outline-offset: 3px;
   border-radius: 2px;
+}
+
+/* En base: fuera de capa ganaría a text-white de la navegación activa. */
+@layer base {
+  a { color: var(--color-marca); }
 }
 
 /* ---------------------------------------------------------------------------
@@ -63,10 +76,30 @@ body {
   to   { transform: scaleY(1);    opacity: 1; }
 }
 
+@keyframes latido {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: .35; transform: scale(1.06); }
+}
+
+.latido {
+  animation: latido 1.6s ease-in-out infinite;
+}
+
 .hora {
   transform-origin: bottom;
   animation: sube-hora .5s cubic-bezier(.2, .8, .3, 1) backwards;
   animation-delay: calc(var(--i) * 22ms);
+}
+
+/* Aviso que acaba de llegar (p. ej. al simular un evento): entra desde arriba y
+   un halo ámbar se apaga solo. */
+@keyframes aviso-entra {
+  from { transform: translateY(-10px); opacity: 0; box-shadow: 0 0 0 4px var(--color-lleno); }
+  to   { transform: translateY(0);     opacity: 1; box-shadow: 0 0 0 0 transparent; }
+}
+
+.aviso-nuevo {
+  animation: aviso-entra 1.6s cubic-bezier(.2, .8, .3, 1);
 }
 
 @media (prefers-reduced-motion: reduce) {

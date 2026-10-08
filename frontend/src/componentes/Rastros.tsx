@@ -10,6 +10,26 @@ export function segmentosDeCola(puntos: PuntoRastro[], tiempo: number, segundos 
   }));
 }
 
+export function estela(puntos: [number, number][], n = 6): {
+  desde: [number, number];
+  hasta: [number, number];
+  opacidad: number;
+  grosor: number;
+}[] {
+  if (puntos.length < 2) return [];
+  const ultimos = puntos.slice(-n);
+  return ultimos.slice(1).map((hasta, i) => {
+    const desde = ultimos[i];
+    const t = (i + 1) / (ultimos.length - 1);
+    return {
+      desde,
+      hasta,
+      opacidad: Math.round(t * 100) / 100,
+      grosor: Math.round((1 + t * 3) * 100) / 100,
+    };
+  });
+}
+
 export function Rastros({ rastros, ancho, alto, tiempo, todos, trackId }: {
   rastros: Rastro[]; ancho: number; alto: number; tiempo: number;
   todos: boolean; trackId: number | null;
@@ -25,4 +45,4 @@ export function Rastros({ rastros, ancho, alto, tiempo, todos, trackId }: {
         strokeLinecap="round" opacity={s.opacidad} />);
     })}
   </svg>;
-}
+}

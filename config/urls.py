@@ -18,12 +18,13 @@ from django.contrib import admin
 from django.urls import include, path
 
 from analytics.api import (events_view, negocio_actual_view, panel_extra_view, summary_view,
-                           avisos_view, aviso_detalle_view, aviso_horario_view)
+                           avisos_view, aviso_detalle_view, aviso_horario_view, simular_aviso_view)
 from analytics.reportes_views import reporte_csv, reporte_pdf
 from cameras.api import (
     camara_ahora_view,
     camara_describir_view,
     camara_detalle_view,
+    camara_estelas_view,
     camaras_en_vivo_view,
     camaras_grid_view,
     camara_mapa_calor_view,
@@ -53,6 +54,7 @@ urlpatterns = [
     path("api/panel-extra/", panel_extra_view),
     path("api/avisos/", avisos_view),
     path("api/avisos/horario/", aviso_horario_view),
+    path("api/avisos/simular/", simular_aviso_view),
     path("api/avisos/<int:regla_id>/", aviso_detalle_view),
     path("api/camaras/", camaras_view),
     path("api/camaras/en_vivo/", camaras_en_vivo_view),
@@ -70,6 +72,7 @@ urlpatterns = [
     path("api/camaras/<int:camera_id>/procesar/", camara_procesar_view),
     path("api/camaras/<int:camera_id>/progreso/", camara_progreso_view),
     path("api/camaras/<int:camera_id>/trayectorias/", camara_trayectorias_view),
+    path("api/camaras/<int:camera_id>/estelas/", camara_estelas_view),
     path("api/camaras/<int:camera_id>/zonas/", zonas_view),
     path("api/camaras/<int:camera_id>/lineas/", lineas_view),
     path("api/camaras/<int:camera_id>/ahora/", camara_ahora_view),

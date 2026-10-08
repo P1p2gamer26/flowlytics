@@ -35,7 +35,7 @@ export default function Camaras({ negocio }: { negocio: number }) {
     <Marco titulo="Cámaras">
       {camaras === null && <p className="col-span-12">Cargando…</p>}
       {camaras?.length === 0 && (
-        <p className="col-span-12 rounded border border-dashed border-tinta-2/40 p-10 text-center">
+        <p className="col-span-12 rounded-3xl bg-panel p-6 text-center">
           Todavía no hay cámaras. <Link to="/conectar/">Conecta una cámara</Link> o{" "}
           <Link to="/subir/">carga un video</Link> para empezar.
         </p>

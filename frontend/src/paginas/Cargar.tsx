@@ -53,7 +53,7 @@ export default function Cargar({ negocio }: { negocio: number }) {
         <label
           onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => { e.preventDefault(); setArchivo(e.dataTransfer.files[0] ?? null); }}
-          className="block cursor-pointer rounded border border-dashed border-tinta-2/40 bg-panel p-10 text-center"
+          className="block cursor-pointer rounded-3xl bg-panel p-6 border-2 border-dashed border-tinta-2/40 text-center"
         >
           <input type="file" accept="video/*" className="sr-only"
                  onChange={(e) => setArchivo(e.target.files?.[0] ?? null)} />
@@ -68,7 +68,7 @@ export default function Cargar({ negocio }: { negocio: number }) {
           </label>
           <input id="url" type="url" value={url} onChange={(e) => setUrl(e.target.value)}
                  placeholder="https://…"
-                 className="mt-1 w-full rounded border border-tinta-2/30 bg-panel px-3 py-2 font-mono text-sm" />
+                 className="mt-1 w-full rounded-full bg-panel px-4 py-2 ring-1 ring-tinta-2/20 font-mono text-sm" />
         </div>
 
         <div>
@@ -77,14 +77,14 @@ export default function Cargar({ negocio }: { negocio: number }) {
           </label>
           <input id="nombre" value={nombre} onChange={(e) => setNombre(e.target.value)}
                  placeholder="Pasillo central"
-                 className="mt-1 w-full rounded border border-tinta-2/30 bg-panel px-3 py-2" />
+                 className="mt-1 w-full rounded-full bg-panel px-4 py-2 ring-1 ring-tinta-2/20" />
         </div>
 
         {error && <p className="text-alerta">{error}</p>}
 
         {!camara && (
           <button type="submit" disabled={estado !== "listo" || (!archivo && !url)}
-                  className="rounded bg-zona px-5 py-2.5 text-white disabled:opacity-40">
+                  className="rounded-full bg-marca px-5 py-2.5 font-semibold text-white hover:bg-marca-2 disabled:opacity-40">
             {estado === "subiendo" ? "Subiendo…" : "Subir video"}
           </button>
         )}
@@ -98,15 +98,14 @@ export default function Cargar({ negocio }: { negocio: number }) {
             onChange={(e) => setDescripcion(e.target.value)}
             rows={2}
             placeholder="Escribe qué se ve: dónde es y qué hay en el plano."
-            className="w-full rounded border border-tinta-2/30 bg-panel px-3 py-2"
-          />
+            className="w-full rounded-full bg-panel px-4 py-2 ring-1 ring-tinta-2/20" />
           <p className="text-sm text-tinta-2">
             Corrige la frase si hace falta: con ella el sistema propone mejor las zonas.
           </p>
-          <button type="button" onClick={confirmar}
-                  className="rounded bg-zona px-5 py-2.5 text-white">
-            Continuar a las zonas
-          </button>
+<button type="button" onClick={confirmar}
+                  className="rounded-full bg-marca px-5 py-2.5 font-semibold text-white hover:bg-marca-2">
+                Continuar a las zonas
+              </button>
         </section>
       )}
     </Marco>

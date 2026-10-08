@@ -39,6 +39,27 @@ def _en_vivo(camera_id, max_edad=30):
     return data.get("personas", 0) if time.time() - data.get("t", 0) < max_edad else None
 
 
+def _roles_en_vivo(camera_id, max_edad=30):
+    """Clientes y trabajadores que el worker vio hace menos de `max_edad` s.
+
+    Lee el mismo archivo en_vivo/<id>.json. Devuelve (clientes, trabajadores)
+    o (None, None) si no hay dato fresco o no tiene los campos nuevos.
+    """
+    ruta = os.path.join(settings.MEDIA_ROOT, "en_vivo", f"{camera_id}.json")
+    try:
+        with open(ruta) as f:
+            data = json.load(f)
+    except (OSError, ValueError):
+        return None, None
+    if time.time() - data.get("t", 0) >= max_edad:
+        return None, None
+    clientes = data.get("clientes")
+    trabajadores = data.get("trabajadores")
+    if clientes is None or trabajadores is None:
+        return None, None
+    return clientes, trabajadores
+
+
 def _sondear_tcp(host, puerto, timeout=3.0):
     """¿Hay algo escuchando ahí? Distingue 'apagada' de 'contraseña mala'."""
     import socket
@@ -168,6 +189,36 @@ def camara_ahora_view(request, camera_id):
     # Windows el worker no puede reemplazarlo (os.replace da PermissionError).
     with open(jpg_path, "rb") as f:
         response = HttpResponse(f.read(), content_type="image/jpeg")
+    response["Cache-Control"] = "no-store"
+    return response
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def camara_estelas_view(request, camera_id):
+    """Devuelve las estelas vivas (últimos ~3 s de cada persona) para la capa Rutas.
+
+    Lee MEDIA_ROOT/en_vivo/<camera_id>_estelas.json. Si no existe, es inválido
+    o el timestamp 't' tiene más de 5 s, devuelve {'recorridos': []}.
+    Cache-Control: no-store para que no se cachee."""
+    camera = _camara_o_403(request.user, camera_id)
+
+    estelas_path = os.path.join(settings.MEDIA_ROOT, "en_vivo", f"{camera_id}_estelas.json")
+    try:
+        with open(estelas_path) as f:
+            data = json.load(f)
+    except (OSError, ValueError):
+        response = Response({"recorridos": []})
+        response["Cache-Control"] = "no-store"
+        return response
+
+    if time.time() - data.get("t", 0) > 5:
+        response = Response({"recorridos": []})
+        response["Cache-Control"] = "no-store"
+        return response
+
+    recorridos = data.get("recorridos", [])
+    response = Response({"recorridos": recorridos})
     response["Cache-Control"] = "no-store"
     return response
 
@@ -499,25 +550,53 @@ def camara_progreso_view(request, camera_id):
 def camara_trayectorias_view(request, camera_id):
     """Recorridos guardados para la cámara: cada uno con su `track_id` y la
     lista de puntos ordenada por frame, para que el editor los dibuje.
-    Con ?minutos=N filtra a los últimos N minutos (máx. 300 trayectorias)."""
+    Con ?minutos=N filtra a los últimos N minutos (máx. 300 trayectorias).
+    Con ?segundos=N (>0) filtra por ended_at >= now-N (ignora minutos).
+    Con ?puntos=K (>0) recorta points a los últimos K."""
     camera = _camara_o_403(request.user, camera_id)
 
     qs = camera.trajectories.all()
-    minutos = request.query_params.get("minutos")
-    if minutos is not None:
+    segundos = request.query_params.get("segundos")
+    if segundos is not None:
         try:
-            m = int(minutos)
-            if m > 0:
-                desde = timezone.now() - timedelta(minutes=m)
-                qs = qs.filter(started_at__gte=desde)
+            s = int(segundos)
+            if s > 0:
+                desde = timezone.now() - timedelta(seconds=s)
+                qs = qs.filter(ended_at__gte=desde)
+        except ValueError:
+            pass
+    else:
+        minutos = request.query_params.get("minutos")
+        if minutos is not None:
+            try:
+                m = int(minutos)
+                if m > 0:
+                    desde = timezone.now() - timedelta(minutes=m)
+                    qs = qs.filter(started_at__gte=desde)
+            except ValueError:
+                pass
+
+    puntos = request.query_params.get("puntos")
+    max_puntos = None
+    if puntos is not None:
+        try:
+            k = int(puntos)
+            if k > 0:
+                max_puntos = k
         except ValueError:
             pass
 
-    recorridos = [
-        {"track_id": t.track_id, "points": t.points,
-         "started_at": t.started_at.isoformat()}
-        for t in qs.order_by("-started_at")[:300]
-    ]
+    recorridos = []
+    for t in qs.order_by("-started_at")[:300]:
+        pts = t.points
+        if max_puntos is not None and len(pts) > max_puntos:
+            pts = pts[-max_puntos:]
+        recorridos.append({
+            "track_id": t.track_id,
+            "points": pts,
+            "started_at": t.started_at.isoformat(),
+            "ended_at": t.ended_at.isoformat(),
+        })
     return Response({"recorridos": recorridos})
 
 
@@ -669,6 +748,8 @@ def camaras_en_vivo_view(request):
         if fresco is not None:
             gente_ahora, viva = fresco, True
 
+        clientes, trabajadores = _roles_en_vivo(camara.pk)
+
         # zonas
         zonas = [
             {"id": z.id, "name": z.name, "kind": z.kind, "polygon": z.polygon}
@@ -687,6 +768,8 @@ def camaras_en_vivo_view(request):
             "height": h,
             "viva": viva,
             "gente_ahora": gente_ahora,
+            "clientes": clientes,
+            "trabajadores": trabajadores,
             "zonas": zonas,
         })
 

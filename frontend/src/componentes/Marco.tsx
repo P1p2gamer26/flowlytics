@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import type { ReactNode } from "react";
 
 const RUTAS = [
@@ -18,10 +18,16 @@ export function Marco({ titulo, subtitulo, acciones, children }: {
 }) {
   return (
     <div className="min-h-screen">
-      <header className="border-b border-tinta-2/15 bg-panel">
+      <header className="rounded-b-3xl bg-panel">
         <div className="mx-auto flex max-w-[1200px] flex-wrap items-center gap-x-8 gap-y-3
                         px-6 py-4">
-          <h1 className="font-display text-titular font-extrabold tracking-tight">
+          <Link to="/" className="flex items-center gap-2 font-display font-extrabold text-marca"
+                aria-label="Flowlytics - Inicio">
+            <img src={import.meta.env.BASE_URL + "logo.png"} alt="" width="32" height="32" />
+            Flowlytics
+          </Link>
+          <span className="w-px h-8 bg-tinta-2/20" aria-hidden="true" />
+          <h1 className="font-display text-titular font-extrabold tracking-tight text-marca">
             {titulo}
             {subtitulo && (
               <span className="ml-2 font-sans text-base font-normal text-tinta-2">
@@ -30,15 +36,13 @@ export function Marco({ titulo, subtitulo, acciones, children }: {
             )}
           </h1>
 
-          {/* La ruta activa se marca con el verde del sistema, el mismo que
-              significa "en calma" en la cinta: aquí dice "estás aquí". */}
-          <nav className="flex flex-wrap gap-5">
+          <nav className="flex flex-wrap gap-2">
             {RUTAS.map((r) => (
               <NavLink key={r.a} to={r.a} end={r.a === "/"}
                        className={({ isActive }) =>
                          isActive
-                           ? "border-b-2 border-calma pb-0.5 font-medium text-tinta"
-                           : "border-b-2 border-transparent pb-0.5 text-tinta-2 hover:text-tinta"}>
+                           ? "rounded-full bg-marca px-4 py-1.5 font-semibold text-white"
+                           : "rounded-full px-4 py-1.5 text-tinta hover:bg-marca-suave/50"}>
                 {r.texto}
               </NavLink>
             ))}

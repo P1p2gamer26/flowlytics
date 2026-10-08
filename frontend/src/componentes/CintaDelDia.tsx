@@ -46,7 +46,7 @@ export function CintaDelDia({ horas, horasConAviso = [], ahora }: {
   const todas = Array.from({ length: 24 }, (_, h) => porHora.get(h));
 
   return (
-    <div className="rounded-lg bg-noche p-5 pb-3">
+    <div className="rounded-3xl bg-panel p-6">
       <div className="flex h-40 items-end gap-[3px]">
         {todas.map((h, i) => {
           const ocupacion = h?.occupancy_avg ?? 0;
@@ -85,7 +85,7 @@ export function ResumenEnPalabras({ visitantes, horaPico, esperaSegundos }: {
 }) {
   if (!visitantes) {
     return (
-      <p className="max-w-[60ch] font-display text-titular font-medium leading-snug">
+      <p className="max-w-[60ch] font-display text-titular font-bold text-tinta leading-snug">
         Hoy todavía no se ha registrado nadie. Cuando una cámara esté analizando,
         el día aparece aquí.
       </p>
@@ -98,10 +98,10 @@ export function ResumenEnPalabras({ visitantes, horaPico, esperaSegundos }: {
     : null;
 
   return (
-    <p className="max-w-[60ch] font-display text-titular font-medium leading-snug">
-      Entraron <strong className="font-extrabold">{visitantes}</strong> personas.
-      {hora && <> El momento más movido fue a las <strong className="font-extrabold">{hora}</strong>.</>}
-      {espera && <> La fila llegó a durar {espera}.</>}
+    <p className="max-w-[60ch] font-display text-titular font-bold text-tinta leading-snug">
+      Entraron <strong className="font-display font-extrabold text-acento">{visitantes}</strong> personas.
+      {hora && <> El momento más movido fue a las <strong className="font-display font-extrabold text-acento">{hora}</strong>.</>}
+      {espera && <> La fila llegó a durar <strong className="font-display font-extrabold text-acento">{espera}</strong>.</>}
     </p>
   );
 }

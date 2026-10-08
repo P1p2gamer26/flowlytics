@@ -57,7 +57,7 @@ export default function Conectar({ negocio }: { negocio: number }) {
           </label>
           <input id="nombre" value={nombre} onChange={(e) => setNombre(e.target.value)}
                  placeholder="Puerta principal"
-                 className="mt-1 w-full rounded border border-tinta-2/30 bg-panel px-3 py-2" />
+                 className="mt-1 w-full rounded-full bg-panel px-4 py-2 ring-1 ring-tinta-2/20" />
         </div>
 
         <div>
@@ -66,7 +66,7 @@ export default function Conectar({ negocio }: { negocio: number }) {
           </label>
           <input id="source" value={source} onChange={(e) => setSource(e.target.value)}
                  placeholder="rtsp://192.168.1.50:554/stream1"
-                 className="mt-1 w-full rounded border border-tinta-2/30 bg-panel px-3 py-2 font-mono text-sm" />
+                 className="mt-1 w-full rounded-full bg-panel px-4 py-2 ring-1 ring-tinta-2/20 font-mono text-sm" />
         </div>
 
         <div className="flex gap-3">
@@ -76,7 +76,7 @@ export default function Conectar({ negocio }: { negocio: number }) {
             </label>
             <input id="usuario" value={usuario} onChange={(e) => setUsuario(e.target.value)}
                    autoComplete="off"
-                   className="mt-1 w-full rounded border border-tinta-2/30 bg-panel px-3 py-2" />
+                   className="mt-1 w-full rounded-full bg-panel px-4 py-2 ring-1 ring-tinta-2/20" />
           </div>
           <div className="flex-1">
             <label htmlFor="password" className="block text-sm text-tinta-2">
@@ -85,7 +85,7 @@ export default function Conectar({ negocio }: { negocio: number }) {
             <input id="password" type="password" value={password}
                    autoComplete="new-password"
                    onChange={(e) => setPassword(e.target.value)}
-                   className="mt-1 w-full rounded border border-tinta-2/30 bg-panel px-3 py-2" />
+                   className="mt-1 w-full rounded-full bg-panel px-4 py-2 ring-1 ring-tinta-2/20" />
           </div>
         </div>
         <p className="text-sm text-tinta-2">
@@ -94,14 +94,14 @@ export default function Conectar({ negocio }: { negocio: number }) {
         </p>
 
         <div className="flex flex-wrap items-center gap-3">
-          <button type="button" onClick={probar} disabled={!source || probando}
-                  className="rounded border border-tinta-2/40 px-4 py-2 disabled:opacity-40">
-            {probando ? "Probando…" : "Probar conexión"}
-          </button>
-          <button type="button" onClick={guardar} disabled={!source}
-                  className="rounded bg-zona px-5 py-2.5 text-white disabled:opacity-40">
-            Guardar cámara
-          </button>
+<button type="button" onClick={probar} disabled={!source || probando}
+                  className="rounded-full bg-panel px-5 py-2.5 font-semibold text-tinta ring-1 ring-tinta-2/20 hover:bg-marca-suave disabled:opacity-40">
+                {probando ? "Probando…" : "Probar conexión"}
+              </button>
+<button type="button" onClick={guardar} disabled={!source}
+                  className="rounded-full bg-marca px-5 py-2.5 font-semibold text-white hover:bg-marca-2 disabled:opacity-40">
+                Guardar cámara
+              </button>
         </div>
 
         {prueba && (

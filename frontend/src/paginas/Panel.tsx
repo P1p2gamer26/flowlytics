@@ -2,6 +2,12 @@ import { useEffect, useState } from "react";
 import { Marco } from "../componentes/Marco";
 import { Plano } from "../componentes/Plano";
 import { CintaDelDia, ResumenEnPalabras } from "../componentes/CintaDelDia";
+import { TarjetasKpi } from "../componentes/TarjetasKpi";
+import { GraficaHoras } from "../componentes/GraficaHoras";
+import { BarrasSemana } from "../componentes/BarrasSemana";
+import { RecomendacionesIA } from "../componentes/RecomendacionesIA";
+import { generarHorasPromedioDemo, generarSemanaDemo, kpisDelDia,
+         recomendacionesParaMostrar } from "../panelDatos";
 import { get } from "../api";
 
 type Rubro = {
@@ -51,12 +57,6 @@ const METRICAS_COMPARATIVA: Record<string, string> = {
   espera_fila_seg: "Espera en fila", cobertura_personal: "Cobertura de personal",
 };
 
-const enMinutos = (s: number | null) => {
-  if (s === null) return null;
-  if (s < 60) return "menos de un minuto";
-  return `${Math.round(s / 60)} min`;
-};
-
 // Fecha local en formato YYYY-MM-DD
 const hoyLocal = () => new Date().toLocaleDateString("en-CA");
 
@@ -67,21 +67,6 @@ const RUBRO_POR_DEFECTO: Rubro = {
   metricas: ["peak_occupancy", "avg_queue_seconds", "staff_coverage_pct"],
   etiquetas: {}, zonas: [], foco: "",
 };
-const ETIQUETAS_POR_DEFECTO: Record<string, string> = {
-  total_visitors: "Visitantes del día", entradas: "Entradas", salidas: "Salidas",
-  peak_occupancy: "Personas a la vez, como máximo", peak_hour: "Hora pico",
-  avg_queue_seconds: "Fila", avg_dwell_seconds: "Permanencia",
-  staff_coverage_pct: "Personal en su sitio",
-};
-
-function valorMetrica(r: Resumen, clave: string): string | number | null {
-  const v = (r as unknown as Record<string, number | null>)[clave];
-  if (clave === "peak_hour") return v === null ? null : `${v}:00`;
-  if (clave.endsWith("_seconds")) return enMinutos(v);
-  if (clave.endsWith("_pct")) return v === null ? null : `${v}%`;
-  return v ?? null;
-}
-
 export default function Panel({ negocio, negocios, onCambiarNegocio }: {
   negocio: number; negocios: Negocio[]; onCambiarNegocio: (id: number) => void;
 }) {
@@ -126,21 +111,25 @@ export default function Panel({ negocio, negocios, onCambiarNegocio }: {
   const esHoy = !dia || dia === hoyLocal();
   const topeZona = Math.max(...resumen.zones.map((z) => z.visitors), 1);
   const rubro = resumen.rubro ?? RUBRO_POR_DEFECTO;
-  const etiqueta = (m: string) => rubro.etiquetas[m] ?? ETIQUETAS_POR_DEFECTO[m] ?? m;
+  const visitasPorHora = Array.from({ length: 24 }, (_, h) =>
+    resumen.hourly.find((x) => x.hour === h)?.visitors ?? 0);
+  const promedioHoras = generarHorasPromedioDemo(visitasPorHora); // demo:
+  const semana = generarSemanaDemo(resumen.total_visitors, new Date()); // demo:
+  const kpis = kpisDelDia(resumen, semana[5].total, semana[0].total); // demo: ayer y semana pasada
 
   const acciones = (
     <div className="flex items-center gap-2 text-sm">
       {negocios.length > 1 && (
         <select value={negocio} onChange={(e) => onCambiarNegocio(Number(e.target.value))}
-                className="rounded-md border border-tinta-2/25 bg-panel px-2 py-1.5">
+                className="rounded-full ring-1 ring-tinta-2/20 bg-panel px-4 py-2">
           {negocios.map((n) => <option key={n.id} value={n.id}>{n.nombre}</option>)}
         </select>
       )}
       <input type="date" value={dia} onChange={(e) => setDia(e.target.value)}
-             className="rounded-md border border-tinta-2/25 bg-panel px-2 py-1.5" />
-      <a className="underline decoration-tinta-2/40 underline-offset-4 hover:decoration-calma"
+             className="rounded-full ring-1 ring-tinta-2/20 bg-panel px-4 py-2" />
+      <a className="underline decoration-tinta-2/40 underline-offset-4 hover:decoration-marca"
          href={`/reporte/csv/?business=${negocio}`}>CSV</a>
-      <a className="underline decoration-tinta-2/40 underline-offset-4 hover:decoration-calma"
+      <a className="underline decoration-tinta-2/40 underline-offset-4 hover:decoration-marca"
          href={`/reporte/pdf/?business=${negocio}`}>PDF</a>
     </div>
   );
@@ -193,26 +182,28 @@ export default function Panel({ negocio, negocios, onCambiarNegocio }: {
                      ahora={esHoy ? new Date().getHours() : undefined} />
       </div>
 
-      {/* Los números de apoyo van en voz baja: la frase de arriba ya dio los
-          importantes, y cinco cifras gigantes compitiendo no dicen nada. Cuáles
-          se muestran, y en qué orden, lo decide el rubro del negocio. */}
-      <p className="col-span-12 -mt-2 flex flex-wrap gap-x-6 gap-y-1 text-tinta-2">
-        {rubro.metricas.filter((m) => m !== "total_visitors").map((m) => {
-          const valor = valorMetrica(resumen, m);
-          if (valor === null) return null;
-          const alerta = m === "staff_coverage_pct" && (resumen.staff_coverage_pct ?? 100) < 80;
-          return (
-            <span key={m}>
-              {etiqueta(m)}:{" "}
-              <strong className={alerta ? "text-fila" : "text-tinta"}>{valor}</strong>
-            </span>
-          );
-        })}
-      </p>
+      <div className="col-span-12">
+        <TarjetasKpi kpis={kpis} />
+      </div>
+
+      <div className="col-span-12">
+        <RecomendacionesIA recomendaciones={recomendacionesParaMostrar(extra?.recomendacion)} />
+      </div>
+
+      <section className="col-span-12 md:col-span-7 rounded-3xl bg-panel p-6">
+        <h2 className="font-display text-xl font-bold text-tinta">Visitantes por hora</h2>
+        <p className="mb-2 text-sm text-tinta-2">Hoy frente al promedio de la semana</p>
+        <GraficaHoras hoy={visitasPorHora} promedio={promedioHoras} />
+      </section>
+      <section className="col-span-12 md:col-span-5 rounded-3xl bg-panel p-6">
+        <h2 className="font-display text-xl font-bold text-tinta">Últimos 7 días</h2>
+        <p className="mb-2 text-sm text-tinta-2">Visitantes por día</p>
+        <BarrasSemana semana={semana} />
+      </section>
 
       {/* Zonas: comparar es el trabajo, así que barras y no una tabla de cifras. */}
       <section className="col-span-12 md:col-span-7">
-        <h2 className="font-display text-xl font-bold">Por zona</h2>
+        <h2 className="font-display text-xl font-bold text-tinta">Por zona</h2>
         {resumen.zones.length ? (
           <ul className="mt-4 space-y-3">
             {resumen.zones.map((z) => (
@@ -225,7 +216,10 @@ export default function Panel({ negocio, negocios, onCambiarNegocio }: {
                   </span>
                 </span>
                 <span className="h-2.5 rounded-full bg-tinta-2/15">
-                  <span className="block h-full rounded-full bg-calma"
+                  <span className={`block h-full rounded-full ${
+                    z.zone_kind === "queue" ? "bg-fila"
+                    : z.zone_kind === "counter" || z.zone_kind === "staff" ? "bg-personal"
+                    : "bg-calma"}`}
                         style={{ width: `${Math.max((z.visitors / topeZona) * 100, 2)}%` }} />
                 </span>
                 <span className="tabular-nums text-sm">
@@ -246,7 +240,7 @@ export default function Panel({ negocio, negocios, onCambiarNegocio }: {
 
       {/* Lo que pasó: frases, no una tabla con claves del sistema. */}
       <section className="col-span-12 md:col-span-5">
-        <h2 className="font-display text-xl font-bold">Lo que pasó</h2>
+        <h2 className="font-display text-xl font-bold text-tinta">Lo que pasó</h2>
         {eventos.length ? (
           <ul className="mt-4 space-y-2">
             {[...eventos]
@@ -270,15 +264,8 @@ export default function Panel({ negocio, negocios, onCambiarNegocio }: {
         )}
       </section>
 
-      {extra?.recomendacion && (
-        <section className="col-span-12 rounded-lg bg-panel p-5">
-          <h2 className="font-display text-xl font-bold">Qué haría yo</h2>
-          <p className="mt-2 max-w-[65ch] whitespace-pre-line">{extra.recomendacion}</p>
-        </section>
-      )}
-
       <section className="col-span-12">
-        <h2 className="font-display text-xl font-bold">
+        <h2 className="font-display text-xl font-bold text-tinta">
           Comparado con negocios como el tuyo
         </h2>
         {extra?.comparativa ? (
@@ -323,11 +310,11 @@ export default function Panel({ negocio, negocios, onCambiarNegocio }: {
       {/* La cámara va abajo: es el detalle, no la respuesta. */}
       <section className="col-span-12">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="font-display text-xl font-bold">La cámara</h2>
+          <h2 className="font-display text-xl font-bold text-tinta">La cámara</h2>
           {camaras.length > 1 && (
             <select value={camara?.id ?? ""}
                     onChange={(e) => cambiarCamara(Number(e.target.value))}
-                    className="rounded-md border border-tinta-2/25 bg-panel px-2 py-1.5 text-sm">
+                    className="rounded-full ring-1 ring-tinta-2/20 bg-panel px-4 py-2 text-sm">
               {camaras.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}{c.es_video ? " (video)" : ""}
@@ -341,8 +328,7 @@ export default function Panel({ negocio, negocios, onCambiarNegocio }: {
             <Plano imagen={vista.image} video={vista.video} ancho={vista.width}
                    alto={vista.height} zonas={camara.zones} camaraId={camara.id} />
           ) : (
-            <p className="rounded-lg border border-dashed border-tinta-2/35 p-10
-                          text-center text-tinta-2">
+            <p className="rounded-3xl bg-panel p-10 text-center text-tinta-2">
               Todavía no hay ninguna cámara con video. Carga uno para empezar.
             </p>
           )}

@@ -177,7 +177,9 @@ LOGOUT_REDIRECT_URL = "/accounts/login/"
 AUTHENTICATION_BACKENDS = ["tenancy.lockout.LockoutModelBackend"]
 
 SESSION_COOKIE_HTTPONLY = True
-CSRF_COOKIE_HTTPONLY = True
+# False a propósito: el panel (SPA) lee la cookie para mandar X-CSRFToken. Con True
+# el JS no la ve y todo POST/PUT/DELETE del panel responde 403. La sesión sigue HttpOnly.
+CSRF_COOKIE_HTTPONLY = False
 SESSION_COOKIE_AGE = 60 * 60 * 8          # 8 horas
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
